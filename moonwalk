@@ -23,6 +23,10 @@ local moonvolk_speed = 0
 
 local moonvolk_keybind = Enum.KeyCode.E
 
+Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
+    Library:ToggleUI()
+end)
+
 Section:NewTextBox("moonvolk keybind", "moonvolk_keybind", function(txt)
     moonvolk_keybind = Enum.KeyCode[txt:upper()]
 end)
