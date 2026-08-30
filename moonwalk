@@ -1,5 +1,7 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
 
+
+
 local Movement = {
     SchemeColor = Color3.fromRGB(105, 120, 190),
     Background = Color3.fromRGB(7, 8, 14),
@@ -9,17 +11,24 @@ local Movement = {
 }
 local Window = Library.CreateLib(" CUCUMBER Movement ", Movement)
 
-local Tab = Window:NewTab("Settings UI")
-
-local Section = Tab:NewSection("by DELIVERY")
-
-Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
-    Library:ToggleUI()
-end)
-
 local Tab = Window:NewTab("Moon Walk")
 
-local Section = Tab:NewSection("by DELIVERY")
+local Section = Tab:NewSection("Violence District = lobby 7 - 0 round = 12 - 0")
+
+local Section = Tab:NewSection("Murder Mystery 2 = 6 - 0")
+
+repeat
+    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
+            local title = gui:FindFirstChild("title", true)
+            if title and title:IsA("TextLabel") and title.Text:find("CUCUMBER Movement", 1, true) then
+                ril_nem = gui
+                break
+            end
+        end
+    end
+    task.wait(0.05)
+until ril_nem
 
 do
     local VIM = game:GetService("VirtualInputManager")
@@ -30,6 +39,7 @@ do
     local moonvolk_speed = 0
 
     local moonvolk_keybind = Enum.KeyCode.E
+    
 
     Section:NewTextBox("moonvolk keybind", "moonvolk_keybind", function(txt)
         moonvolk_keybind = Enum.KeyCode[txt:upper()]
@@ -58,4 +68,17 @@ do
             end)
         end
     end)
+
+    ril_nem.Destroying:Connect(function()
+        moonvolk_eneble = false
+    end)
+
 end
+
+local Tab = Window:NewTab("Settings UI")
+
+local Section = Tab:NewSection("by DELIVERY")
+
+Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
+    Library:ToggleUI()
+end)
