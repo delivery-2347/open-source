@@ -1,4 +1,4 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui ii
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -142,8 +142,8 @@ Section:NewKeybind("launch / restoreCamera", "Запустить или верн
     end
 end)
 
--- Слайдер скорости ракеты (50 - 1000)
-Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 50, function(s)
+-- Слайдер скорости ракеты (0 - 1000)
+Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 0, function(s)
     speed = s
 end)
 
