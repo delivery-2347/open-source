@@ -1,0 +1,216 @@
+-- sori za Iidealinie skript na nasinku sam delal toliko gui ii
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local fovkorekt = camera.FieldOfView
+
+--// Загрузка UI Библиотеки
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
+
+--// Bomb Events & References
+local GrabEvents = ReplicatedStorage:WaitForChild("GrabEvents")
+local SetNetworkOwner = GrabEvents:WaitForChild("SetNetworkOwner")
+local SpawnToyRemoteFunction = ReplicatedStorage.MenuToys:WaitForChild("SpawnToyRemoteFunction")
+
+local FolderSpawnedInToys = player.Name .. "SpawnedInToys"
+local Inventory = workspace:WaitForChild(FolderSpawnedInToys)
+
+--// FPV Overlay GUI (Полосы помех на экране)
+local gui = Instance.new("ScreenGui")
+gui.Name = "FPVGui"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.Parent = game:GetService("CoreGui")
+
+local overlay = Instance.new("Frame")
+overlay.Parent = gui
+overlay.Size = UDim2.fromScale(1, 1)
+overlay.BackgroundColor3 = Color3.new(1, 1, 1)
+overlay.BackgroundTransparency = 1
+overlay.BorderSizePixel = 0
+overlay.Visible = false
+
+local lines = {}
+for i = 1, 8 do
+    local line = Instance.new("Frame")
+    line.Parent = overlay
+    line.Size = UDim2.new(1, 0, 0, 2)
+    line.BackgroundColor3 = Color3.new(1, 1, 1)
+    line.BorderSizePixel = 0
+    lines[i] = line
+end
+
+--// Sound Setup
+local sound = camera:FindFirstChild("DroneFlySound")
+if not sound then
+    sound = Instance.new("Sound")
+    sound.Name = "DroneFlySound"
+    sound.Parent = camera
+end
+sound.SoundId = "rbxassetid://119007878357784"
+sound.Looped = true
+sound.Volume = 0
+sound.PlaybackSpeed = 1
+
+--// State & Settings
+local active = false
+local bomb = nil
+local body = nil
+local yaw = 0
+local pitch = 0
+local sensitivity = 0.35
+local speed = 200
+local targetVolume = 2.5
+local soundSpeed = 1
+local startTime = 0
+
+--// Return camera
+local function restoreCamera()
+    active = false
+    sound:Stop()
+    sound.Volume = 0
+    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    camera.CameraType = Enum.CameraType.Custom
+    
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            camera.CameraSubject = humanoid
+        end
+    end
+    
+    overlay.Visible = false
+    bomb = nil
+    body = nil
+end
+
+--// Launch
+local function launch()
+    fovkorekt = camera.FieldOfView
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    
+    task.spawn(function()
+        SpawnToyRemoteFunction:InvokeServer(
+            "BombMissile",
+            hrp.CFrame,
+            Vector3.new()
+        )
+    end)
+    
+    bomb = Inventory:WaitForChild("BombMissile")
+    body = bomb:WaitForChild("Body")
+    task.wait()
+    
+    SetNetworkOwner:FireServer(body, body.CFrame)
+
+    local pitchAngle, yawAngle = camera.CFrame:ToOrientation()
+    pitch = math.deg(pitchAngle)
+    yaw = math.deg(yawAngle)
+    startTime = tick()
+    active = true
+    
+    camera.CameraType = Enum.CameraType.Scriptable
+    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+    overlay.Visible = true
+    overlay.BackgroundTransparency = 1
+    
+    -- Запуск звука
+    sound.PlaybackSpeed = soundSpeed
+    sound.Volume = 0
+    sound:Play()
+    TweenService:Create(sound, TweenInfo.new(0.4), { Volume = targetVolume }):Play()
+end
+
+--// Создание интерфейса
+local Window = Library.CreateLib("FPV Drone / Missile", "RJTheme3")
+local Tab = Window:NewTab("Управление")
+local Section = Tab:NewSection("Настройки FPV")
+
+-- Бинд на запуск / возврат
+Section:NewKeybind("launch / restoreCamera", "Запустить или вернуть камеру", Enum.KeyCode.N, function()
+    if not active then
+        launch()
+    else
+        restoreCamera()
+    end
+end)
+
+-- Слайдер скорости ракеты (50 - 1000)
+Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 50, function(s)
+    speed = s
+end)
+
+-- Слайдер громкости звука (0 - 10)
+Section:NewSlider("Volume sound", "Регулировка громкости", 10, 0, function(v)
+    targetVolume = v
+    if active then
+        sound.Volume = v
+    end
+end)
+
+-- Слайдер скорости воспроизведения звука (10% - 300%)
+Section:NewTextBox("speed sound (%)", "default speed 100", function(txt)
+    local num = tonumber(txt)
+    if num and num > 0 then
+        soundSpeed = num / 100
+        sound.PlaybackSpeed = soundSpeed
+    end
+end)
+
+-- Текстбокс для ID звука
+Section:NewTextBox("ID sound", "Вставьте Asset ID звука", function(txt)
+    local cleanId = txt:match("%d+")
+    if cleanId then
+        sound.SoundId = "rbxassetid://" .. cleanId
+        if active then
+            sound:Play()
+        end
+    end
+end)
+
+--// FPV RenderStepped Loop
+RunService.RenderStepped:Connect(function()
+    if not active then
+        return
+    end
+
+    -- Если ракета уничтожена / взорвалась -> вернуть камеру
+    if not bomb or not bomb.Parent or not body or not body.Parent then
+        restoreCamera()
+        return
+    end
+
+    camera.FieldOfView = fovkorekt
+
+    -- Управление мышью
+    local mouseDelta = UserInputService:GetMouseDelta()
+    yaw = yaw - mouseDelta.X * sensitivity
+    pitch = math.clamp(pitch - mouseDelta.Y * sensitivity, -85, 85)
+
+    local rotation = CFrame.fromEulerAnglesYXZ(
+        math.rad(pitch),
+        math.rad(yaw),
+        0
+    )
+
+    -- Позиционирование и скорость бомбы
+    local bombRotation = rotation * CFrame.Angles(math.rad(-90), 0, math.rad(90))
+    body.CFrame = CFrame.new(body.Position) * bombRotation
+    body.AssemblyLinearVelocity = rotation.LookVector * speed
+
+    -- Позиция камеры от ракеты
+    camera.CFrame = CFrame.new(body.Position) * rotation * CFrame.new(0, 1, -2.5)
+
+    -- Полосы помех FPV
+    for _, line in ipairs(lines) do
+        line.Position = UDim2.new(0, 0, math.random(), 0)
+        line.BackgroundTransparency = math.random(5, 9) / 10
+    end
+end)
