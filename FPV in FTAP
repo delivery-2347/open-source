@@ -214,3 +214,9 @@ RunService.RenderStepped:Connect(function()
         line.BackgroundTransparency = math.random(5, 9) / 10
     end
 end)
+
+local Section = Tab:NewSection("by DELIVERY")
+
+Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.C, function()
+    Library:ToggleUI()
+end)
