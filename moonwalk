@@ -1,7 +1,5 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
 
-
-
 local Movement = {
     SchemeColor = Color3.fromRGB(105, 120, 190),
     Background = Color3.fromRGB(7, 8, 14),
@@ -39,7 +37,13 @@ do
     local moonvolk_speed = 0
 
     local moonvolk_keybind = Enum.KeyCode.E
-    
+
+    local function kakdela(state)
+        if not state then
+            VIM:SendKeyEvent(false, Enum.KeyCode.D, false, nil)
+            VIM:SendKeyEvent(false, Enum.KeyCode.A, false, nil)
+        end
+    end
 
     Section:NewTextBox("moonvolk keybind", "moonvolk_keybind", function(txt)
         moonvolk_keybind = Enum.KeyCode[txt:upper()]
@@ -51,19 +55,28 @@ do
 
     Section:NewToggle("moonvolk eneble", "moonvolk_eneble", function(state)
         moonvolk_eneble = state
+        kakdela(state)
     end)
 
     UIS.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == moonvolk_keybind and moonvolk_eneble then
             task.spawn(function()
                 while UIS:IsKeyDown(moonvolk_keybind) and moonvolk_eneble do
-                    local vremya = math.random() * moonvolk_speed
-                    VIM:SendKeyEvent(true, Enum.KeyCode.D, false, nil)
-                    task.wait(vremya)
-                    VIM:SendKeyEvent(false, Enum.KeyCode.D, false, nil)
-                    VIM:SendKeyEvent(true, Enum.KeyCode.A, false, nil)
-                    task.wait(vremya)
-                    VIM:SendKeyEvent(false, Enum.KeyCode.A, false, nil)
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    local vremya = moonvolk_speed * (0.9 + math.random() * 0.1)     --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    VIM:SendKeyEvent(true, Enum.KeyCode.D, false, nil)              --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    task.wait(vremya)                                               --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    VIM:SendKeyEvent(false, Enum.KeyCode.D, false, nil)             --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    VIM:SendKeyEvent(true, Enum.KeyCode.A, false, nil)              --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    task.wait(vremya)                                               --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
+                    VIM:SendKeyEvent(false, Enum.KeyCode.A, false, nil)             --gavno kod master
+                    kakdela(UIS:IsKeyDown(moonvolk_keybind))                        --gavno kod master
                 end
             end)
         end
