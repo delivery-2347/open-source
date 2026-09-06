@@ -1,0 +1,216 @@
+local ENEIBLE = true
+local Liabirigi_suska = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
+
+local CUCUMBER = {
+    SchemeColor = Color3.fromRGB(45, 160, 95),
+    Background = Color3.fromRGB(8, 18, 12),
+    Header = Color3.fromRGB(12, 30, 20),
+    TextColor = Color3.fromRGB(230, 230, 230),
+    ElementColor = Color3.fromRGB(18, 55, 38)
+}
+
+local Window = Liabirigi_suska.CreateLib("🥒 CUCUMBER HUB EVADE 🥒", CUCUMBER)
+
+local Tab = Window:NewTab("menu")
+
+local Section = Tab:NewSection("by DELIVERY")
+
+repeat
+    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
+            local title = gui:FindFirstChild("title", true)
+            if title and title:IsA("TextLabel") and title.Text:find("CUCUMBER HUB EVADE", 1, true) then
+                ril_nem = gui
+                break
+            end
+        end
+    end
+    task.wait(0.05)
+until ril_nem
+
+do
+    local AutoJump = false
+
+    Section:NewKeybind("Auto Jump", "Авто прыжок", Enum.KeyCode.V, function()
+        AutoJump = not AutoJump
+
+        task.spawn(function()
+            while AutoJump and ENEIBLE do
+                local char = game.Players.LocalPlayer.Character
+                local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+
+                if hum and hum.FloorMaterial ~= Enum.Material.Air then
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+
+                task.wait(0.1)
+            end
+        end)
+    end)
+end
+
+do
+    local AutoCtrl = false
+    local taimvontrl = 0.1
+    local VIM = game:GetService("VirtualInputManager")
+
+    Section:NewKeybind("Auto Ctrl", "Авто Ctrl", Enum.KeyCode.B, function()
+        AutoCtrl = not AutoCtrl
+
+        if AutoCtrl then
+            task.spawn(function()
+                while AutoCtrl and ENEIBLE do
+                    task.wait(taimvontrl)
+                    VIM:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+                    task.wait(taimvontrl)
+                    VIM:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+                end
+            end)
+        end
+    end)
+
+    Section:NewTextBox("zaderska dlya Auto Ctrl", "nahui", function(text)
+        local value = tonumber(text)
+
+        if value and value >= 0 and value <= 1 then
+            taimvontrl = value
+        end
+    end)
+end
+
+local SystemTab = Window:NewTab("System")
+
+local KeybindSection = SystemTab:NewSection("Управление интерфейсом")
+
+KeybindSection:NewKeybind("Скрыть / Показать меню", "Нажмите клавишу для изменения бинда", Enum.KeyCode.RightControl, function()
+    Liabirigi_suska:ToggleUI()
+end)
+
+local ThemePresetsSection = SystemTab:NewSection("Готовые темы")
+
+local themePresets = {
+    ["CUCUMBER"] = {
+        Scheme = Color3.fromRGB(45, 160, 95),
+        Bg = Color3.fromRGB(8, 18, 12),
+        Header = Color3.fromRGB(12, 30, 20),
+        Text = Color3.fromRGB(230, 230, 230),
+        Element = Color3.fromRGB(18, 55, 38)
+    },
+
+    ["OBSIDIAN"] = {
+        Scheme = Color3.fromRGB(255, 255, 255),
+        Bg = Color3.fromRGB(7, 7, 7),
+        Header = Color3.fromRGB(12, 12, 12),
+        Text = Color3.fromRGB(245, 245, 245),
+        Element = Color3.fromRGB(20, 20, 20)
+    },
+
+    ["MIDNIGHT"] = {
+        Scheme = Color3.fromRGB(90, 110, 255),
+        Bg = Color3.fromRGB(8, 9, 18),
+        Header = Color3.fromRGB(12, 14, 28),
+        Text = Color3.fromRGB(235, 235, 245),
+        Element = Color3.fromRGB(20, 23, 45)
+    },
+
+    ["CRIMSON"] = {
+        Scheme = Color3.fromRGB(220, 55, 65),
+        Bg = Color3.fromRGB(15, 7, 8),
+        Header = Color3.fromRGB(25, 10, 12),
+        Text = Color3.fromRGB(245, 235, 235),
+        Element = Color3.fromRGB(42, 16, 20)
+    },
+
+    ["VIOLET"] = {
+        Scheme = Color3.fromRGB(155, 95, 255),
+        Bg = Color3.fromRGB(10, 7, 15),
+        Header = Color3.fromRGB(17, 11, 26),
+        Text = Color3.fromRGB(240, 235, 250),
+        Element = Color3.fromRGB(29, 19, 43)
+    },
+
+    ["FROST"] = {
+        Scheme = Color3.fromRGB(190, 220, 255),
+        Bg = Color3.fromRGB(10, 12, 15),
+        Header = Color3.fromRGB(16, 19, 24),
+        Text = Color3.fromRGB(245, 248, 255),
+        Element = Color3.fromRGB(28, 33, 40)
+    },
+
+    ["STEEL"] = {
+        Scheme = Color3.fromRGB(135, 145, 155),
+        Bg = Color3.fromRGB(9, 10, 11),
+        Header = Color3.fromRGB(15, 16, 18),
+        Text = Color3.fromRGB(235, 235, 235),
+        Element = Color3.fromRGB(27, 29, 32)
+    },
+
+    ["OCEAN"] = {
+        Scheme = Color3.fromRGB(55, 170, 220),
+        Bg = Color3.fromRGB(6, 12, 16),
+        Header = Color3.fromRGB(10, 21, 28),
+        Text = Color3.fromRGB(230, 240, 245),
+        Element = Color3.fromRGB(16, 38, 48)
+    },
+
+    ["CARBON"] = {
+        Scheme = Color3.fromRGB(100, 100, 100),
+        Bg = Color3.fromRGB(5, 5, 5),
+        Header = Color3.fromRGB(10, 10, 10),
+        Text = Color3.fromRGB(255, 255, 255),
+        Element = Color3.fromRGB(17, 17, 17)
+    }
+}
+
+ThemePresetsSection:NewDropdown(
+    "Выбор темы",
+    "",
+    {
+        "CUCUMBER",
+        "OBSIDIAN",
+        "MIDNIGHT",
+        "CRIMSON",
+        "VIOLET",
+        "FROST",
+        "STEEL",
+        "OCEAN",
+        "CARBON"
+    },
+    function(selectedTheme)
+        local theme = themePresets[selectedTheme]
+
+        if theme then
+            Liabirigi_suska:ChangeColor("SchemeColor", theme.Scheme)
+            Liabirigi_suska:ChangeColor("Background", theme.Bg)
+            Liabirigi_suska:ChangeColor("Header", theme.Header)
+            Liabirigi_suska:ChangeColor("TextColor", theme.Text)
+            Liabirigi_suska:ChangeColor("ElementColor", theme.Element)
+        end
+    end
+)
+
+local CustomColorSection = SystemTab:NewSection("Настройка цветов")
+
+CustomColorSection:NewColorPicker("Акцентный цвет (Scheme)", "Цвет активных элементов и акцентов", Color3.fromRGB(74, 99, 135), function(color)
+    Liabirigi_suska:ChangeColor("SchemeColor", color)
+end)
+
+CustomColorSection:NewColorPicker("Цвет фона (Background)", "Основной цвет фона окна", Color3.fromRGB(36, 37, 43), function(color)
+    Liabirigi_suska:ChangeColor("Background", color)
+end)
+
+CustomColorSection:NewColorPicker("Цвет шапки/панелей (Header)", "Цвет верхней шапки и левой панели", Color3.fromRGB(28, 29, 34), function(color)
+    Liabirigi_suska:ChangeColor("Header", color)
+end)
+
+CustomColorSection:NewColorPicker("Цвет кнопок (Element)", "Цвет подложки элементов управления", Color3.fromRGB(32, 32, 38), function(color)
+    Liabirigi_suska:ChangeColor("ElementColor", color)
+end)
+
+CustomColorSection:NewColorPicker("Цвет текста (TextColor)", "Основной цвет шрифта", Color3.fromRGB(255, 255, 255), function(color)
+    Liabirigi_suska:ChangeColor("TextColor", color)
+end)
+
+ril_nem.Destroying:Connect(function()
+    ENEIBLE = false
+end)
