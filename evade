@@ -9,7 +9,7 @@ local CUCUMBER = {
     ElementColor = Color3.fromRGB(18, 55, 38)
 }
 
-local Window = Liabirigi_suska.CreateLib("🥒 CUCUMBER HUB EVADE 🥒", CUCUMBER)
+local Window = Liabirigi_suska.CreateLib("CUCUMBER HUB EVADE", CUCUMBER)
 
 local Tab = Window:NewTab("menu")
 
