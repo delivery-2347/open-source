@@ -59,6 +59,7 @@ sound.PlaybackSpeed = 1
 
 --// State & Settings
 local active = false
+local activehut = true
 local bomb = nil
 local body = nil
 local yaw = 0
@@ -95,7 +96,7 @@ local function launch()
     fovkorekt = camera.FieldOfView
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-    
+    local hrpCFrame5222 = hrp.CFrame
     task.spawn(function()
         SpawnToyRemoteFunction:InvokeServer(
             "BombMissile",
@@ -103,11 +104,12 @@ local function launch()
             Vector3.new()
         )
     end)
-    
+
     bomb = Inventory:WaitForChild("BombMissile")
     body = bomb:WaitForChild("Body")
     task.wait()
-    
+    hrp.CFrame = body.CFrame
+    task.wait()
     SetNetworkOwner:FireServer(body, body.CFrame)
 
     local pitchAngle, yawAngle = camera.CFrame:ToOrientation()
@@ -115,7 +117,7 @@ local function launch()
     yaw = math.deg(yawAngle)
     startTime = tick()
     active = true
-    
+    hrp.CFrame = hrpCFrame5222
     camera.CameraType = Enum.CameraType.Scriptable
     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     overlay.Visible = true
@@ -135,6 +137,7 @@ local Section = Tab:NewSection("Настройки FPV")
 
 -- Бинд на запуск / возврат
 Section:NewKeybind("launch / restoreCamera", "Запустить или вернуть камеру", Enum.KeyCode.N, function()
+    if not activehut then return end
     if not active then
         launch()
     else
@@ -177,6 +180,7 @@ end)
 
 --// FPV RenderStepped Loop
 RunService.RenderStepped:Connect(function()
+    if not activehut then return end
     if not active then
         return
     end
@@ -219,4 +223,28 @@ local Section = Tab:NewSection("by DELIVERY")
 
 Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.C, function()
     Library:ToggleUI()
+end)
+
+local FPVGui
+
+repeat
+    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
+            local title = gui:FindFirstChild("title", true)
+
+            if title and title:IsA("TextLabel") and title.Text:find("FPV Drone / Missile", 1, true) then
+                FPVGui = gui
+                print("Открытие:", FPVGui)
+                break
+            end
+        end
+    end
+
+    task.wait(0.05)
+until FPVGui
+
+FPVGui.Destroying:Connect(function()
+    restoreCamera()
+    activehut = false
+    print("Закрытие:", FPVGui)
 end)
