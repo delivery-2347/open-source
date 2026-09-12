@@ -10,7 +10,7 @@ local camera = workspace.CurrentCamera
 local fovkorekt = camera.FieldOfView
 
 --// Загрузка UI Библиотеки
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/mySliderSetValue"))()
 
 --// Bomb Events & References
 local GrabEvents = ReplicatedStorage:WaitForChild("GrabEvents")
@@ -97,6 +97,7 @@ local function launch()
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
     local hrpCFrame5222 = hrp.CFrame
+
     task.spawn(function()
         SpawnToyRemoteFunction:InvokeServer(
             "BombMissile",
@@ -109,7 +110,7 @@ local function launch()
     body = bomb:WaitForChild("Body")
     task.wait()
     hrp.CFrame = body.CFrame
-    task.wait()
+    task.wait(0.15)
     SetNetworkOwner:FireServer(body, body.CFrame)
 
     local pitchAngle, yawAngle = camera.CFrame:ToOrientation()
@@ -131,7 +132,7 @@ local function launch()
 end
 
 --// Создание интерфейса
-local Window = Library.CreateLib("FPV Drone / Missile", "RJTheme3")
+local Window = Library.CreateLib("CUCUMBER / FPV Drone / Missile", "RJTheme3")
 local Tab = Window:NewTab("Управление")
 local Section = Tab:NewSection("Настройки FPV")
 
@@ -146,8 +147,25 @@ Section:NewKeybind("launch / restoreCamera", "Запустить или верн
 end)
 
 -- Слайдер скорости ракеты (0 - 1000)
-Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 0, function(s)
+local speedsliderfph = Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 0, function(s)
     speed = s
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if not active or not activehut then
+        return
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseWheel then
+        -- Колёсико вверх = ускорение
+        -- Колёсико вниз = замедление
+        speed = math.clamp(speed + input.Position.Z * 30, 0, 1000)
+
+        -- Обновляем значение слайдера, если библиотека это поддерживает
+        if speedsliderfph then
+            speedsliderfph:SetValue(speed)
+        end
+    end
 end)
 
 -- Слайдер громкости звука (0 - 10)
@@ -178,7 +196,7 @@ Section:NewTextBox("ID sound", "Вставьте Asset ID звука", function(
     end
 end)
 
---// FPV RenderStepped Loop
+-- FPV RenderStepped Loop
 RunService.RenderStepped:Connect(function()
     if not activehut then return end
     if not active then
@@ -234,7 +252,6 @@ repeat
 
             if title and title:IsA("TextLabel") and title.Text:find("FPV Drone / Missile", 1, true) then
                 FPVGui = gui
-                print("Открытие:", FPVGui)
                 break
             end
         end
