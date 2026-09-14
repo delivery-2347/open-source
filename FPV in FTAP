@@ -10,7 +10,7 @@ local camera = workspace.CurrentCamera
 local fovkorekt = camera.FieldOfView
 
 --// Загрузка UI Библиотеки
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/mySliderSetValue"))()
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/setvalt%2BaddBeewew"))()
 
 --// Bomb Events & References
 local GrabEvents = ReplicatedStorage:WaitForChild("GrabEvents")
@@ -132,7 +132,7 @@ local function launch()
 end
 
 --// Создание интерфейса
-local Window = Library.CreateLib("CUCUMBER / FPV Drone / Missile", "RJTheme3")
+local Window = Kavo.CreateLib("CUCUMBER / FPV Drone / Missile", "RJTheme3")
 local Tab = Window:NewTab("Управление")
 local Section = Tab:NewSection("Настройки FPV")
 
@@ -240,7 +240,7 @@ end)
 local Section = Tab:NewSection("by DELIVERY")
 
 Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.C, function()
-    Library:ToggleUI()
+    Kavo:ToggleUI()
 end)
 
 local FPVGui
