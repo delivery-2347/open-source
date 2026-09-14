@@ -1,0 +1,770 @@
+--// CROSSHAIR GUI
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+--==================================================
+-- SETTINGS
+--==================================================
+
+local CrosshairImage = "6031094678"
+local CrosshairSize = 50
+local RotationSpeed = 0
+local Rotation = 0
+
+local CrosshairEnabled = true
+local ToggleKey = Enum.KeyCode.Q
+
+-- true  = CoreGui
+-- false = PlayerGui
+local UseCoreGui = true
+
+--==================================================
+-- DEFAULT CURSOR
+--==================================================
+
+local eneiblekursos = false
+
+local function SetDefaultCursor()
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	local Crosshairs = PlayerGui:FindFirstChild("Crosshairs")
+
+	if Crosshairs then
+		Crosshairs.Enabled = not eneiblekursos
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(0.5)
+
+	if eneiblekursos then
+		SetDefaultCursor()
+	end
+end)
+
+--==================================================
+-- REMOVE OLD GUI
+--==================================================
+
+pcall(function()
+	local OldCore = CoreGui:FindFirstChild("CrosshairGUI")
+
+	if OldCore then
+		OldCore:Destroy()
+	end
+end)
+
+pcall(function()
+	local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+
+	if PlayerGui then
+		local OldPlayer = PlayerGui:FindFirstChild("CrosshairGUI")
+
+		if OldPlayer then
+			OldPlayer:Destroy()
+		end
+	end
+end)
+
+--==================================================
+-- SCREEN GUI
+--==================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CrosshairGUI"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+--==================================================
+-- GUI PARENT + PRIORITY
+--==================================================
+
+local function GetGuiParent()
+	if UseCoreGui then
+		return CoreGui
+	else
+		return LocalPlayer:WaitForChild("PlayerGui")
+	end
+end
+
+local function UpdateGuiLocation()
+	ScreenGui.Parent = GetGuiParent()
+
+	if UseCoreGui then
+		-- CoreGui = поверх
+		ScreenGui.DisplayOrder = 999999
+	else
+		-- PlayerGui = низкий приоритет
+		ScreenGui.DisplayOrder = -100
+	end
+end
+
+UpdateGuiLocation()
+
+--==================================================
+-- CROSSHAIR
+--==================================================
+
+local Crosshair = Instance.new("ImageLabel")
+Crosshair.Name = "Crosshair"
+Crosshair.AnchorPoint = Vector2.new(0.5, 0.5)
+Crosshair.BackgroundTransparency = 1
+Crosshair.BorderSizePixel = 0
+Crosshair.Size = UDim2.fromOffset(
+	CrosshairSize,
+	CrosshairSize
+)
+Crosshair.Image = "rbxassetid://" .. CrosshairImage
+Crosshair.Visible = CrosshairEnabled
+Crosshair.Rotation = 0
+Crosshair.ZIndex = 1
+Crosshair.Parent = ScreenGui
+
+--==================================================
+-- CROSSHAIR POSITION
+--==================================================
+
+local function UpdateCrosshairPosition()
+	local Camera = workspace.CurrentCamera
+
+	if not Camera then
+		return
+	end
+
+	local Viewport = Camera.ViewportSize
+
+	Crosshair.Position = UDim2.fromOffset(
+		Viewport.X / 2,
+		Viewport.Y / 2
+	)
+end
+
+UpdateCrosshairPosition()
+
+--==================================================
+-- MAIN
+--==================================================
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.fromOffset(300, 380)
+Main.Position = UDim2.new(0.5, -150, 0.5, -190)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.BorderSizePixel = 0
+Main.ZIndex = 1000000
+Main.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = Main
+
+--==================================================
+-- TITLE BAR
+--==================================================
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 38)
+TitleBar.BackgroundTransparency = 1
+TitleBar.ZIndex = 1000001
+TitleBar.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Position = UDim2.fromOffset(12, 0)
+Title.Size = UDim2.new(1, -90, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Crosshair"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 17
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 1000002
+Title.Parent = TitleBar
+
+--==================================================
+-- MINUS
+--==================================================
+
+local Minimize = Instance.new("TextButton")
+Minimize.AnchorPoint = Vector2.new(1, 0.5)
+Minimize.Position = UDim2.new(1, -38, 0.5, 0)
+Minimize.Size = UDim2.fromOffset(26, 26)
+Minimize.BackgroundTransparency = 1
+Minimize.Text = "−"
+Minimize.TextColor3 = Color3.fromRGB(220, 220, 220)
+Minimize.TextSize = 22
+Minimize.Font = Enum.Font.GothamBold
+Minimize.ZIndex = 1000002
+Minimize.Parent = TitleBar
+
+--==================================================
+-- CLOSE
+--==================================================
+
+local Close = Instance.new("TextButton")
+Close.AnchorPoint = Vector2.new(1, 0.5)
+Close.Position = UDim2.new(1, -8, 0.5, 0)
+Close.Size = UDim2.fromOffset(26, 26)
+Close.BackgroundTransparency = 1
+Close.Text = "×"
+Close.TextColor3 = Color3.fromRGB(220, 220, 220)
+Close.TextSize = 22
+Close.Font = Enum.Font.GothamBold
+Close.ZIndex = 1000002
+Close.Parent = TitleBar
+
+--==================================================
+-- BUTTON CREATOR
+--==================================================
+
+local function CreateButton(Text, Position, Size)
+	local Button = Instance.new("TextButton")
+
+	Button.Position = Position
+	Button.Size = Size or UDim2.new(1, -30, 0, 34)
+	Button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+	Button.BorderSizePixel = 0
+	Button.Text = Text
+	Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Button.TextSize = 13
+	Button.Font = Enum.Font.Gotham
+	Button.ZIndex = 1000001
+	Button.Parent = Main
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 7)
+	Corner.Parent = Button
+
+	return Button
+end
+
+--==================================================
+-- ENABLE
+--==================================================
+
+local ToggleButton = CreateButton(
+	"Crosshair: ON",
+	UDim2.fromOffset(15, 50)
+)
+
+ToggleButton.MouseButton1Click:Connect(function()
+	CrosshairEnabled = not CrosshairEnabled
+
+	Crosshair.Visible = CrosshairEnabled
+
+	ToggleButton.Text =
+		"Crosshair: " ..
+		(CrosshairEnabled and "ON" or "OFF")
+end)
+
+--==================================================
+-- IMAGE ID
+--==================================================
+
+local ImageTitle = Instance.new("TextLabel")
+ImageTitle.Position = UDim2.fromOffset(15, 93)
+ImageTitle.Size = UDim2.new(1, -30, 0, 18)
+ImageTitle.BackgroundTransparency = 1
+ImageTitle.Text = "Image ID"
+ImageTitle.TextColor3 = Color3.fromRGB(210, 210, 210)
+ImageTitle.TextSize = 12
+ImageTitle.Font = Enum.Font.Gotham
+ImageTitle.TextXAlignment = Enum.TextXAlignment.Left
+ImageTitle.ZIndex = 1000001
+ImageTitle.Parent = Main
+
+local ImageBox = Instance.new("TextBox")
+ImageBox.Position = UDim2.fromOffset(15, 115)
+ImageBox.Size = UDim2.new(1, -30, 0, 32)
+ImageBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ImageBox.BorderSizePixel = 0
+ImageBox.ClearTextOnFocus = false
+ImageBox.Text = CrosshairImage
+ImageBox.PlaceholderText = "ID / rbxassetid://ID"
+ImageBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+ImageBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+ImageBox.TextSize = 13
+ImageBox.Font = Enum.Font.Gotham
+ImageBox.ZIndex = 1000001
+ImageBox.Parent = Main
+
+local ImageCorner = Instance.new("UICorner")
+ImageCorner.CornerRadius = UDim.new(0, 7)
+ImageCorner.Parent = ImageBox
+
+ImageBox.FocusLost:Connect(function()
+	local Text = ImageBox.Text
+
+	local ID =
+		Text:match("rbxassetid://(%d+)")
+		or Text:match("(%d+)")
+
+	if ID then
+		CrosshairImage = ID
+		Crosshair.Image = "rbxassetid://" .. ID
+		ImageBox.Text = ID
+	end
+end)
+
+--==================================================
+-- SIZE LABEL
+--==================================================
+
+local SizeLabel = Instance.new("TextLabel")
+SizeLabel.Position = UDim2.fromOffset(15, 157)
+SizeLabel.Size = UDim2.new(1, -30, 0, 18)
+SizeLabel.BackgroundTransparency = 1
+SizeLabel.Text = "Size: " .. CrosshairSize
+SizeLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+SizeLabel.TextSize = 12
+SizeLabel.Font = Enum.Font.Gotham
+SizeLabel.TextXAlignment = Enum.TextXAlignment.Left
+SizeLabel.ZIndex = 1000001
+SizeLabel.Parent = Main
+
+--==================================================
+-- SIZE SLIDER
+--==================================================
+
+local SizeBar = Instance.new("Frame")
+SizeBar.Position = UDim2.fromOffset(15, 182)
+SizeBar.Size = UDim2.new(1, -30, 0, 6)
+SizeBar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+SizeBar.BorderSizePixel = 0
+SizeBar.ZIndex = 1000001
+SizeBar.Parent = Main
+
+local SizeBarCorner = Instance.new("UICorner")
+SizeBarCorner.CornerRadius = UDim.new(1, 0)
+SizeBarCorner.Parent = SizeBar
+
+local SizeAlpha = math.clamp(
+	(CrosshairSize - 10) / 190,
+	0,
+	1
+)
+
+local SizeFill = Instance.new("Frame")
+SizeFill.Size = UDim2.new(SizeAlpha, 0, 1, 0)
+SizeFill.BackgroundColor3 = Color3.fromRGB(100, 170, 255)
+SizeFill.BorderSizePixel = 0
+SizeFill.ZIndex = 1000002
+SizeFill.Parent = SizeBar
+
+local SizeFillCorner = Instance.new("UICorner")
+SizeFillCorner.CornerRadius = UDim.new(1, 0)
+SizeFillCorner.Parent = SizeFill
+
+local SizeKnob = Instance.new("Frame")
+SizeKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+SizeKnob.Position = UDim2.new(
+	SizeAlpha,
+	0,
+	0.5,
+	0
+)
+SizeKnob.Size = UDim2.fromOffset(14, 14)
+SizeKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SizeKnob.BorderSizePixel = 0
+SizeKnob.ZIndex = 1000003
+SizeKnob.Parent = SizeBar
+
+local SizeKnobCorner = Instance.new("UICorner")
+SizeKnobCorner.CornerRadius = UDim.new(1, 0)
+SizeKnobCorner.Parent = SizeKnob
+
+local SizeDragging = false
+
+local function UpdateSize(MouseX)
+	local Alpha = math.clamp(
+		(MouseX - SizeBar.AbsolutePosition.X)
+			/ SizeBar.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	CrosshairSize = math.floor(
+		10 + Alpha * 190
+	)
+
+	Crosshair.Size = UDim2.fromOffset(
+		CrosshairSize,
+		CrosshairSize
+	)
+
+	SizeLabel.Text = "Size: " .. CrosshairSize
+
+	SizeFill.Size = UDim2.new(
+		Alpha,
+		0,
+		1,
+		0
+	)
+
+	SizeKnob.Position = UDim2.new(
+		Alpha,
+		0,
+		0.5,
+		0
+	)
+end
+
+SizeBar.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+		SizeDragging = true
+		UpdateSize(Input.Position.X)
+	end
+end)
+
+--==================================================
+-- SPEED LABEL
+--==================================================
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Position = UDim2.fromOffset(15, 202)
+SpeedLabel.Size = UDim2.new(1, -30, 0, 18)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Rotate Speed: " .. RotationSpeed
+SpeedLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+SpeedLabel.TextSize = 12
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.ZIndex = 1000001
+SpeedLabel.Parent = Main
+
+--==================================================
+-- SPEED SLIDER
+--==================================================
+
+local SpeedBar = Instance.new("Frame")
+SpeedBar.Position = UDim2.fromOffset(15, 227)
+SpeedBar.Size = UDim2.new(1, -30, 0, 6)
+SpeedBar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+SpeedBar.BorderSizePixel = 0
+SpeedBar.ZIndex = 1000001
+SpeedBar.Parent = Main
+
+local SpeedBarCorner = Instance.new("UICorner")
+SpeedBarCorner.CornerRadius = UDim.new(1, 0)
+SpeedBarCorner.Parent = SpeedBar
+
+local SpeedAlpha = math.clamp(
+	RotationSpeed / 100,
+	0,
+	1
+)
+
+local SpeedFill = Instance.new("Frame")
+SpeedFill.Size = UDim2.new(
+	SpeedAlpha,
+	0,
+	1,
+	0
+)
+SpeedFill.BackgroundColor3 = Color3.fromRGB(100, 170, 255)
+SpeedFill.BorderSizePixel = 0
+SpeedFill.ZIndex = 1000002
+SpeedFill.Parent = SpeedBar
+
+local SpeedFillCorner = Instance.new("UICorner")
+SpeedFillCorner.CornerRadius = UDim.new(1, 0)
+SpeedFillCorner.Parent = SpeedFill
+
+local SpeedKnob = Instance.new("Frame")
+SpeedKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+SpeedKnob.Position = UDim2.new(
+	SpeedAlpha,
+	0,
+	0.5,
+	0
+)
+SpeedKnob.Size = UDim2.fromOffset(14, 14)
+SpeedKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SpeedKnob.BorderSizePixel = 0
+SpeedKnob.ZIndex = 1000003
+SpeedKnob.Parent = SpeedBar
+
+local SpeedKnobCorner = Instance.new("UICorner")
+SpeedKnobCorner.CornerRadius = UDim.new(1, 0)
+SpeedKnobCorner.Parent = SpeedKnob
+
+local SpeedDragging = false
+
+local function UpdateSpeed(MouseX)
+	local Alpha = math.clamp(
+		(MouseX - SpeedBar.AbsolutePosition.X)
+			/ SpeedBar.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	RotationSpeed = math.floor(
+		Alpha * 100
+	)
+
+	SpeedLabel.Text =
+		"Rotate Speed: " .. RotationSpeed
+
+	SpeedFill.Size = UDim2.new(
+		Alpha,
+		0,
+		1,
+		0
+	)
+
+	SpeedKnob.Position = UDim2.new(
+		Alpha,
+		0,
+		0.5,
+		0
+	)
+
+	if RotationSpeed == 0 then
+		Rotation = 0
+		Crosshair.Rotation = 0
+	end
+end
+
+SpeedBar.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+		SpeedDragging = true
+		UpdateSpeed(Input.Position.X)
+	end
+end)
+
+--==================================================
+-- BIND
+--==================================================
+
+local BindButton = CreateButton(
+	"Bind: " .. ToggleKey.Name,
+	UDim2.fromOffset(15, 250)
+)
+
+BindButton.Size = UDim2.new(1, -30, 0, 32)
+
+local WaitingForBind = false
+
+BindButton.MouseButton1Click:Connect(function()
+	WaitingForBind = true
+	BindButton.Text = "Press a key..."
+end)
+
+--==================================================
+-- GUI LOCATION
+--==================================================
+
+local LocationButton = CreateButton(
+	"GUI: CoreGui",
+	UDim2.fromOffset(15, 292)
+)
+
+LocationButton.Size = UDim2.new(1, -30, 0, 32)
+
+LocationButton.MouseButton1Click:Connect(function()
+	UseCoreGui = not UseCoreGui
+
+	UpdateGuiLocation()
+
+	LocationButton.Text =
+		"GUI: " ..
+		(UseCoreGui and "CoreGui" or "PlayerGui")
+end)
+
+--==================================================
+-- GAME-SPECIFIC DEFAULT CURSOR
+--==================================================
+
+if game.GameId == 2668101271 then
+
+	local DisassembleButton = CreateButton(
+		"Default Cursor: OFF",
+		UDim2.fromOffset(15, 334)
+	)
+
+	DisassembleButton.Size = UDim2.new(1, -30, 0, 30)
+
+	DisassembleButton.MouseButton1Click:Connect(function()
+		eneiblekursos = not eneiblekursos
+
+		SetDefaultCursor()
+
+		DisassembleButton.Text =
+			"Default Cursor: " ..
+			(eneiblekursos and "OFF" or "ON")
+	end)
+
+end
+
+--==================================================
+-- DRAG WINDOW
+--==================================================
+
+local Dragging = false
+local DragStart
+local StartPosition
+
+TitleBar.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+		Dragging = true
+		DragStart = Input.Position
+		StartPosition = Main.Position
+	end
+end)
+
+--==================================================
+-- MINIMIZE
+--==================================================
+
+local Minimized = false
+
+local function SetMinimized(State)
+	Minimized = State
+
+	Main.Size =
+		State
+		and UDim2.fromOffset(180, 38)
+		or UDim2.fromOffset(300, 380)
+
+	for _, Child in ipairs(Main:GetChildren()) do
+
+		if Child ~= TitleBar
+			and Child ~= MainCorner then
+
+			Child.Visible = not State
+
+		end
+
+	end
+
+	TitleBar.Visible = true
+end
+
+Minimize.MouseButton1Click:Connect(function()
+	SetMinimized(not Minimized)
+end)
+
+--==================================================
+-- CLOSE
+--==================================================
+
+Close.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+--==================================================
+-- MOUSE INPUT
+--==================================================
+
+UserInputService.InputChanged:Connect(function(Input)
+
+	if Input.UserInputType ~= Enum.UserInputType.MouseMovement then
+		return
+	end
+
+	if SizeDragging then
+		UpdateSize(Input.Position.X)
+	end
+
+	if SpeedDragging then
+		UpdateSpeed(Input.Position.X)
+	end
+
+	if Dragging then
+
+		local Delta = Input.Position - DragStart
+
+		Main.Position = UDim2.new(
+			StartPosition.X.Scale,
+			StartPosition.X.Offset + Delta.X,
+
+			StartPosition.Y.Scale,
+			StartPosition.Y.Offset + Delta.Y
+		)
+
+	end
+
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		SizeDragging = false
+		SpeedDragging = false
+		Dragging = false
+
+	end
+
+end)
+
+--==================================================
+-- KEYBINDS
+--==================================================
+
+UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+
+	if UserInputService:GetFocusedTextBox() then
+		return
+	end
+
+	-- Changing bind
+	if WaitingForBind then
+
+		if Input.UserInputType == Enum.UserInputType.Keyboard then
+
+			ToggleKey = Input.KeyCode
+			WaitingForBind = false
+
+			BindButton.Text =
+				"Bind: " .. ToggleKey.Name
+
+		end
+
+		return
+	end
+
+	if GameProcessed then
+		return
+	end
+
+	-- Toggle crosshair
+	if Input.KeyCode == ToggleKey then
+
+		CrosshairEnabled = not CrosshairEnabled
+
+		Crosshair.Visible = CrosshairEnabled
+
+		ToggleButton.Text =
+			"Crosshair: " ..
+			(CrosshairEnabled and "ON" or "OFF")
+
+	end
+
+end)
+
+--==================================================
+-- CROSSHAIR LOOP
+--==================================================
+
+RunService.RenderStepped:Connect(function(DeltaTime)
+
+	UpdateCrosshairPosition()
+
+	if RotationSpeed <= 0 then
+
+		Rotation = 0
+		Crosshair.Rotation = 0
+
+	else
+
+		Rotation += RotationSpeed * 12 * DeltaTime
+		Crosshair.Rotation = Rotation % 360
+
+	end
+
+end)
