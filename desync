@@ -607,4 +607,3 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 print("HOOK DESYNC LOADED")
-print("Original fake position mechanics restored")
