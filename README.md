@@ -23,3 +23,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 ```
 
 <img width="332" height="358" alt="IA Crosshair" src="https://github.com/user-attachments/assets/9719cb7c-63b0-46a0-a637-5942ea36ed36" />
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/desync"))()
+```
+<img width="921" height="765" alt="image" src="https://github.com/user-attachments/assets/a6c2ca2f-0a66-48dc-9e02-1142b922adbd" />
