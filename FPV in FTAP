@@ -1,4 +1,5 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -112,7 +113,6 @@ local function launch()
     hrp.CFrame = body.CFrame
     task.wait(0.15)
     SetNetworkOwner:FireServer(body, body.CFrame)
-
     local pitchAngle, yawAngle = camera.CFrame:ToOrientation()
     pitch = math.deg(pitchAngle)
     yaw = math.deg(yawAngle)
@@ -123,7 +123,6 @@ local function launch()
     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     overlay.Visible = true
     overlay.BackgroundTransparency = 1
-    
     -- Запуск звука
     sound.PlaybackSpeed = soundSpeed
     sound.Volume = 0
@@ -137,15 +136,55 @@ local Tab = Window:NewTab("Управление")
 local Section = Tab:NewSection("Настройки FPV")
 
 -- Бинд на запуск / возврат
+local ownerConnection
+local hrpCFrame522
 Section:NewKeybind("launch / restoreCamera", "Запустить или вернуть камеру", Enum.KeyCode.N, function()
     if not activehut then return end
     if not active then
         launch()
+        if ownerConnection then
+            ownerConnection:Disconnect()
+            ownerConnection = nil
+        end
+        local character = player.Character
+
+        if character then
+            local HRP = character:FindFirstChild("HumanoidRootPart")
+            if HRP then
+                hrpCFrame522 = HRP.CFrame
+            end
+        end
+        ownerConnection = bomb.DescendantAdded:Connect(function(obj)
+            if obj.Name == "PartOwner" and obj.Value ~= player.Name and active then
+                local character = player.Character
+
+                if character then
+                    local HRP = character:FindFirstChild("HumanoidRootPart")
+
+                    if HRP then
+                        local hrpCFrame522 = HRP.CFrame
+                        HRP.CFrame = body.CFrame * CFrame.new(math.random(5, 10), math.random(5, 10), math.random(5, 10))
+                        task.wait(0.2)
+                        for i = 1, 5 do
+                            task.spawn(function()
+                                SetNetworkOwner:FireServer(body, body.CFrame)
+                            end)
+                        end
+                        task.wait(0.2)
+                        HRP.CFrame = hrpCFrame522
+                    end
+                end
+            end
+        end)
     else
         restoreCamera()
+        if ownerConnection then
+            ownerConnection:Disconnect()
+            ownerConnection = nil
+        end
     end
-end)
 
+end)
 -- Слайдер скорости ракеты (0 - 1000)
 local speedsliderfph = Section:NewSlider("speed FPV", "Скорость полёта FPV", 1000, 0, function(s)
     speed = s
@@ -195,14 +234,12 @@ Section:NewTextBox("ID sound", "Вставьте Asset ID звука", function(
         end
     end
 end)
-
 -- FPV RenderStepped Loop
 RunService.RenderStepped:Connect(function()
     if not activehut then return end
     if not active then
         return
     end
-
     -- Если ракета уничтожена / взорвалась -> вернуть камеру
     if not bomb or not bomb.Parent or not body or not body.Parent then
         restoreCamera()
@@ -226,7 +263,7 @@ RunService.RenderStepped:Connect(function()
     local bombRotation = rotation * CFrame.Angles(math.rad(-90), 0, math.rad(90))
     body.CFrame = CFrame.new(body.Position) * bombRotation
     body.AssemblyLinearVelocity = rotation.LookVector * speed
-
+    body.AssemblyAngularVelocity = Vector3.zero
     -- Позиция камеры от ракеты
     camera.CFrame = CFrame.new(body.Position) * rotation * CFrame.new(0, 1, -2.5)
 
