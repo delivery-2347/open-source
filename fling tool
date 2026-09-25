@@ -1,0 +1,227 @@
+local players = game:GetService("Players")
+local rs = game:GetService("ReplicatedStorage")
+local ws = workspace
+local lp = players.LocalPlayer
+local fling_tool_bypass_velocity = true
+local fling_on = true
+local fling_act_conn = nil
+local fling_tool = nil
+
+local function my_hrp()
+	local c = lp.Character
+	return c and c:FindFirstChild("HumanoidRootPart")
+end
+local function clicked_player()
+	local m = lp:GetMouse()
+	local target = m.Target
+	if target then
+		local node = target
+		while node and node ~= ws do
+			local p = players:GetPlayerFromCharacter(node)
+			if p and p ~= lp then return p end
+			node = node.Parent
+		end
+	end
+	local cam = ws.CurrentCamera
+	local mp = Vector2.new(m.X, m.Y)
+	local best, bestd = nil, 110
+	for _, p in ipairs(players:GetPlayers()) do
+		if p ~= lp and p.Character then
+			local hrp = p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("Head")
+			if hrp then
+				local sp, on = cam:WorldToViewportPoint(hrp.Position)
+				if on then
+					local d = (Vector2.new(sp.X, sp.Y) - mp).Magnitude
+					if d < bestd then bestd = d best = p end
+				end
+			end
+		end
+	end
+	return best
+end
+local function do_fling(tp)
+	if not tp or not tp.Character then return end
+	local hrp = my_hrp()
+	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+	if not hrp then return end
+	local tc = tp.Character
+	local thrp = tc:FindFirstChild("HumanoidRootPart") or tc:FindFirstChild("Head")
+	local th = tc:FindFirstChildOfClass("Humanoid")
+	if not thrp then return end
+	getgenv().FLING_ACTIVE = (getgenv().FLING_ACTIVE or 0) + 1
+	if hrp.Velocity.Magnitude < 50 then
+		getgenv().OldPos = hrp.CFrame
+	end
+	if th and th.Sit then
+		getgenv().FLING_ACTIVE = math.max(0, (getgenv().FLING_ACTIVE or 1) - 1)
+		return
+	end
+	local camera = ws.CurrentCamera
+	local old_fdh = ws.FallenPartsDestroyHeight
+	if thrp then
+		camera.CameraSubject = thrp
+	elseif th then
+		camera.CameraSubject = th
+	end
+	pcall(function() ws.FallenPartsDestroyHeight = 0/0 end)
+	local bv = Instance.new("BodyVelocity")
+	bv.Parent = hrp
+	bv.Velocity = Vector3.new(0, 0, 0)
+	bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	local se = hum and hum:GetStateEnabled(Enum.HumanoidStateType.Seated)
+	if hum then hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false) end
+	local tw = 2
+	local tm = tick()
+	local ang = 0
+	local active = true
+	repeat
+		if hrp and th then
+			local tv
+			if fling_tool_bypass_velocity then
+				tv = th.MoveDirection * th.WalkSpeed
+			else
+				tv = thrp.Velocity
+			end
+			if tv.Magnitude < 50 then
+				ang = ang + 100
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+			else
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, th.WalkSpeed)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, -th.WalkSpeed)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, th.WalkSpeed)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+				hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+				lp.Character:SetPrimaryPartCFrame(hrp.CFrame)
+				hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+				hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				task.wait()
+			end
+		end
+	until tm + tw < tick() or not active
+	if bv then bv:Destroy() end
+	if hum and se ~= nil then hum:SetStateEnabled(Enum.HumanoidStateType.Seated, se) end
+	camera.CameraSubject = hum
+	if getgenv().OldPos and hrp then
+		hrp.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
+		lp.Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
+		if hum then hum:ChangeState("GettingUp") end
+		for _, part in pairs(lp.Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.Velocity = Vector3.new()
+				part.RotVelocity = Vector3.new()
+			end
+		end
+		pcall(function() ws.FallenPartsDestroyHeight = old_fdh end)
+	end
+	getgenv().FLING_ACTIVE = math.max(0, (getgenv().FLING_ACTIVE or 1) - 1)
+end
+
+local function give_fling_tool()
+    if not fling_on then return end
+    local bp = lp:FindFirstChildOfClass("Backpack")
+    if not bp then return end
+    local existing = bp:FindFirstChild("fling")
+    if not existing and lp.Character then existing = lp.Character:FindFirstChild("fling") end
+    if existing then
+        fling_tool = existing
+        return
+    end
+    if fling_act_conn then
+        pcall(function()
+            fling_act_conn:Disconnect()
+        end)
+        fling_act_conn = nil
+    end
+    if fling_tool then
+        pcall(function()
+            fling_tool:Destroy()
+        end)
+    end
+    fling_tool = Instance.new("Tool")
+    fling_tool.Name = "fling"
+    fling_tool.RequiresHandle = false
+    fling_tool.CanBeDropped = false
+    fling_tool.ManualActivationOnly = false
+    fling_tool.Parent = bp
+    fling_act_conn = fling_tool.Activated:Connect(function()
+        local tp = clicked_player()
+        if tp and tp.Character and my_hrp() then
+            do_fling(tp)
+        end
+    end)
+end
+
+lp.CharacterAdded:Connect(function()
+    task.wait(1)
+    give_fling_tool()
+end)
+
+give_fling_tool()
