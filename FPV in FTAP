@@ -1,4 +1,4 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -102,7 +102,7 @@ local function launch()
     task.spawn(function()
         SpawnToyRemoteFunction:InvokeServer(
             "BombMissile",
-            hrp.CFrame,
+            hrp.CFrame * CFrame.new(0,10,0),
             Vector3.new()
         )
     end)
