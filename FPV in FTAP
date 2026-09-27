@@ -1,4 +1,4 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + esp local pleirs 
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + melkie bag s esp
 local UIS = game:GetService("UserInputService")
 
 local pcortuluhon
@@ -33,7 +33,7 @@ local targetVolume = 2.5
 local soundSpeed = 1
 local startTime = 0
 local ownerConnection
-local hrpCFrame522
+local savedPlayerCFrame
 local cameraCFrameX = 0
 local cameraCFrameY = 1
 local cameraCFrameZ = -2.5
@@ -109,7 +109,7 @@ local function launch()
     fovkorekt = camera.FieldOfView
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-    local hrpCFrame5222 = hrp.CFrame
+    local savedLaunchCFrame = hrp.CFrame
 
     task.spawn(function()
         SpawnToyRemoteFunction:InvokeServer(
@@ -130,7 +130,7 @@ local function launch()
     yaw = math.deg(yawAngle)
     startTime = tick()
     active = true
-    hrp.CFrame = hrpCFrame5222
+    hrp.CFrame = savedLaunchCFrame
     camera.CameraType = Enum.CameraType.Scriptable
     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     overlay.Visible = true
@@ -160,7 +160,7 @@ if pcortuluhon == "pc" then
             if character then
                 local HRP = character:FindFirstChild("HumanoidRootPart")
                 if HRP then
-                    hrpCFrame522 = HRP.CFrame
+                    savedPlayerCFrame = HRP.CFrame
                 end
             end
             ownerConnection = bomb.DescendantAdded:Connect(function(obj)
@@ -171,7 +171,7 @@ if pcortuluhon == "pc" then
                         local HRP = character:FindFirstChild("HumanoidRootPart")
 
                         if HRP then
-                            local hrpCFrame522 = HRP.CFrame
+                            local savedPlayerCFrame = HRP.CFrame
                             HRP.CFrame = body.CFrame * CFrame.new(math.random(5, 10), math.random(5, 10), math.random(5, 10))
                             task.wait(0.2)
                             for i = 1, 5 do
@@ -180,7 +180,7 @@ if pcortuluhon == "pc" then
                                 end)
                             end
                             task.wait(0.2)
-                            HRP.CFrame = hrpCFrame522
+                            HRP.CFrame = savedPlayerCFrame
                         end
                     end
                 end
@@ -207,7 +207,7 @@ elseif pcortuluhon == "rtuluhon" then
             if character then
                 local HRP = character:FindFirstChild("HumanoidRootPart")
                 if HRP then
-                    hrpCFrame522 = HRP.CFrame
+                    savedPlayerCFrame = HRP.CFrame
                 end
             end
             ownerConnection = bomb.DescendantAdded:Connect(function(obj)
@@ -218,7 +218,7 @@ elseif pcortuluhon == "rtuluhon" then
                         local HRP = character:FindFirstChild("HumanoidRootPart")
 
                         if HRP then
-                            local hrpCFrame522 = HRP.CFrame
+                            local savedPlayerCFrame = HRP.CFrame
                             HRP.CFrame = body.CFrame * CFrame.new(math.random(5, 10), math.random(5, 10), math.random(5, 10))
                             task.wait(0.2)
                             for i = 1, 5 do
@@ -227,7 +227,7 @@ elseif pcortuluhon == "rtuluhon" then
                                 end)
                             end
                             task.wait(0.2)
-                            HRP.CFrame = hrpCFrame522
+                            HRP.CFrame = savedPlayerCFrame
                         end
                     end
                 end
@@ -351,6 +351,7 @@ RunService.RenderStepped:Connect(function()
     if not active then
         return
     end
+
     if not bomb or not bomb.Parent or not body or not body.Parent then
         restoreCamera()
         return
