@@ -1,4 +1,4 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + pod tuluhani optimezasiya
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + ahuetilinoe nastroika
 local UIS = game:GetService("UserInputService")
 
 local pcortuluhon
@@ -146,7 +146,9 @@ local Tab = Window:NewTab("Управление")
 local Section = Tab:NewSection("Настройки FPV")
 
 local ownerConnection
+
 local hrpCFrame522
+
 if pcortuluhon == "pc" then
     Section:NewKeybind("launch / restoreCamera", "Запустить или вернуть камеру", Enum.KeyCode.N, function()
         if not activehut then return end
@@ -243,10 +245,34 @@ elseif pcortuluhon == "rtuluhon" then
     end)
 end
 
+local cameraCFrameX = 0
+local cameraCFrameY = 1
+local cameraCFrameZ = -2.5
+
+local cameraFrameX = Section:NewSlider("camera CFrame X", "Регулировка camera", 10, -10, function(v)
+    cameraCFrameX = v
+    if active then
+        cameraCFrameX = v
+    end
+end)
+
+local cameraFrameY = Section:NewSlider("camera CFrame Y", "Регулировка camera", 10, -10, function(v)
+    cameraCFrameY = v
+    if active then
+        cameraCFrameY = v
+    end
+end)
+
+local cameraFrameZ = Section:NewSlider("camera CFrame Z", "Регулировка camera", 10, -10, function(v)
+    cameraCFrameZ = v
+    if active then
+        cameraCFrameZ = v
+    end
+end)
+
 local speedsliderfph = Section:NewSlider("speed FPV", "Скорость полёта FPV", 2000, 0, function(s)
     speed = s
 end)
-
 if pcortuluhon == "pc" then
     UserInputService.InputChanged:Connect(function(input)
         if not active or not activehut then
@@ -264,7 +290,7 @@ elseif pcortuluhon == "rtuluhon" then
 
 end
 
-Section:NewSlider("Volume sound", "Регулировка громкости", 10, 0, function(v)
+local Volumesound = Section:NewSlider("Volume sound", "Регулировка громкости", 10, 0, function(v)
     targetVolume = v
     if active then
         sound.Volume = v
@@ -314,10 +340,10 @@ RunService.RenderStepped:Connect(function()
 
     local bombRotation = rotation * CFrame.Angles(math.rad(-90), 0, math.rad(90))
     body.CFrame = CFrame.new(body.Position) * bombRotation
-    body.AssemblyLinearVelocity = rotation.LookVector * speed
+    body.AssemblyLinearVelocity = rotation.LookVector * speed + Vector3.new(0, workspace.Gravity * 0.006, 0)
     body.AssemblyAngularVelocity = Vector3.zero
 
-    camera.CFrame = CFrame.new(body.Position) * rotation * CFrame.new(0, 1, -2.5)
+    camera.CFrame = CFrame.new(body.Position) * rotation * CFrame.new(cameraCFrameX, cameraCFrameY, cameraCFrameZ)
 
     for _, line in ipairs(lines) do
         line.Position = UDim2.new(0, 0, math.random(), 0)
@@ -414,23 +440,25 @@ elseif pcortuluhon == "rtuluhon" then
     end)
 end
 
-local FPVGui
+cameraFrameX:SetValue(0)
+cameraFrameY:SetValue(1)
+cameraFrameZ:SetValue(-2.5)
+speedsliderfph:SetValue(200)
+Volumesound:SetValue(2.5)
 
+local FPVGui
 repeat
     for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
         if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
             local title = gui:FindFirstChild("title", true)
-
             if title and title:IsA("TextLabel") and title.Text:find("FPV Drone / Missile", 1, true) then
                 FPVGui = gui
                 break
             end
         end
     end
-
     task.wait(0.05)
 until FPVGui
-
 FPVGui.Destroying:Connect(function()
     restoreCamera()
     activehut = false
