@@ -1,0 +1,376 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+
+local CoreGui = game:GetService("CoreGui")
+
+local OldGui = CoreGui:FindFirstChild("CUCUMBER Translate")
+
+if OldGui then
+    OldGui:Destroy()
+end
+
+local FROM_LANGUAGE = "ru"
+local TO_LANGUAGE = "uk"
+
+local Languages = {
+    {"Auto", "auto"},
+    {"English", "en"},
+    {"Russian", "ru"},
+    {"Ukrainian", "uk"},
+    {"Polish", "pl"},
+    {"German", "de"},
+    {"Spanish", "es"},
+    {"French", "fr"},
+    {"Portuguese", "pt"},
+    {"Italian", "it"},
+    {"Dutch", "nl"},
+    {"Czech", "cs"},
+    {"Slovak", "sk"},
+    {"Bulgarian", "bg"},
+}
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CUCUMBER Translate"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Name = "Frame"
+Frame.Parent = ScreenGui
+Frame.BorderSizePixel = 0
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.Size = UDim2.new(0, 528, 0, 202)
+Frame.Position = UDim2.new(0.25976, 0, 0.37201, 0)
+
+local Close = Instance.new("ImageButton")
+Close.Name = "zakriti"
+Close.Parent = Frame
+Close.BorderSizePixel = 0
+Close.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Close.Image = "rbxassetid://13417638612"
+Close.Size = UDim2.new(0, 23, 0, 23)
+Close.Position = UDim2.new(0.95644, 0, 0, 0)
+
+Close.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+local Hide = Instance.new("ImageButton")
+Hide.Name = "spryatoti"
+Hide.Parent = Frame
+Hide.BorderSizePixel = 0
+Hide.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Hide.Image = "rbxassetid://92880046539048"
+Hide.Size = UDim2.new(0, 23, 0, 23)
+Hide.Position = UDim2.new(0.91288, 0, 0, 0)
+
+local HiddenButton = Instance.new("ImageButton")
+HiddenButton.Name = "HiddenButton"
+HiddenButton.Parent = ScreenGui
+HiddenButton.Visible = false
+HiddenButton.BorderSizePixel = 0
+HiddenButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+HiddenButton.Image = "rbxassetid://92880046539048"
+HiddenButton.Size = UDim2.new(0, 35, 0, 35)
+HiddenButton.Position = Frame.Position
+
+Hide.MouseButton1Click:Connect(function()
+    HiddenButton.Position = UDim2.new(
+        Frame.Position.X.Scale,
+        Frame.Position.X.Offset,
+        Frame.Position.Y.Scale,
+        Frame.Position.Y.Offset
+    )
+
+    Frame.Visible = false
+    HiddenButton.Visible = true
+end)
+
+HiddenButton.MouseButton1Click:Connect(function()
+    Frame.Position = HiddenButton.Position
+    Frame.Visible = true
+    HiddenButton.Visible = false
+end)
+
+local Title = Instance.new("TextLabel")
+Title.Name = "nazvanie"
+Title.Parent = Frame
+Title.BorderSizePixel = 0
+Title.TextSize = 14
+Title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Title.FontFace = Font.new(
+    "rbxasset://fonts/families/SourceSansPro.json",
+    Enum.FontWeight.Regular,
+    Enum.FontStyle.Normal
+)
+Title.TextColor3 = Color3.fromRGB(0, 255, 0)
+Title.Size = UDim2.new(0, 436, 0, 23)
+Title.Position = UDim2.new(0.08712, 0, 0, 0)
+Title.Text = "CUCUMBER Translate"
+
+local Input = Instance.new("TextBox")
+Input.Name = "input"
+Input.Parent = Frame
+Input.CursorPosition = -1
+Input.PlaceholderColor3 = Color3.fromRGB(0, 128, 0)
+Input.BorderSizePixel = 0
+Input.TextSize = 14
+Input.TextColor3 = Color3.fromRGB(0, 255, 0)
+Input.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Input.FontFace = Font.new(
+    "rbxasset://fonts/families/SourceSansPro.json",
+    Enum.FontWeight.Regular,
+    Enum.FontStyle.Normal
+)
+Input.PlaceholderText = "input"
+Input.Size = UDim2.new(0, 200, 0, 50)
+Input.Position = UDim2.new(0.08712, 0, 0.37624, 0)
+Input.Text = ""
+Input.TextWrapped = true
+Input.TextXAlignment = Enum.TextXAlignment.Left
+Input.TextYAlignment = Enum.TextYAlignment.Top
+Input.ClearTextOnFocus = false
+
+local Output = Instance.new("TextLabel")
+Output.Name = "output"
+Output.Parent = Frame
+Output.BorderSizePixel = 0
+Output.TextSize = 14
+Output.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Output.FontFace = Font.new(
+    "rbxasset://fonts/families/SourceSansPro.json",
+    Enum.FontWeight.Regular,
+    Enum.FontStyle.Normal
+)
+Output.TextColor3 = Color3.fromRGB(0, 255, 0)
+Output.Size = UDim2.new(0, 200, 0, 50)
+Output.Position = UDim2.new(0.53409, 0, 0.37624, 0)
+Output.Text = "output"
+Output.TextWrapped = true
+Output.TextXAlignment = Enum.TextXAlignment.Left
+Output.TextYAlignment = Enum.TextYAlignment.Top
+
+local function CreateDropdown(name, position, defaultText, callback)
+
+    local Button = Instance.new("TextButton")
+    Button.Name = name
+    Button.Parent = Frame
+    Button.BorderSizePixel = 0
+    Button.TextSize = 14
+    Button.TextColor3 = Color3.fromRGB(0, 255, 0)
+    Button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Button.FontFace = Font.new(
+        "rbxasset://fonts/families/SourceSansPro.json",
+        Enum.FontWeight.Regular,
+        Enum.FontStyle.Normal
+    )
+    Button.Size = UDim2.new(0, 200, 0, 16)
+    Button.Position = position
+    Button.Text = defaultText
+
+    local List = Instance.new("Frame")
+    List.Name = "Dropdown"
+    List.Parent = Frame
+    List.Visible = false
+    List.BorderSizePixel = 0
+    List.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    List.Position = UDim2.new(
+        position.X.Scale,
+        position.X.Offset,
+        position.Y.Scale,
+        position.Y.Offset + 16
+    )
+    List.Size = UDim2.new(0, 200, 0, #Languages * 18)
+    List.ZIndex = 20
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Parent = List
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    for _, language in ipairs(Languages) do
+
+        local Option = Instance.new("TextButton")
+        Option.Name = language[2]
+        Option.Parent = List
+        Option.BorderSizePixel = 0
+        Option.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        Option.TextColor3 = Color3.fromRGB(0, 255, 0)
+        Option.TextSize = 14
+        Option.FontFace = Font.new(
+            "rbxasset://fonts/families/SourceSansPro.json",
+            Enum.FontWeight.Regular,
+            Enum.FontStyle.Normal
+        )
+        Option.Size = UDim2.new(1, 0, 0, 18)
+        Option.Text = language[1]
+        Option.ZIndex = 21
+
+        Option.MouseButton1Click:Connect(function()
+
+            Button.Text = language[1]
+            List.Visible = false
+
+            callback(language[2], language[1])
+
+        end)
+    end
+
+    Button.MouseButton1Click:Connect(function()
+        List.Visible = not List.Visible
+    end)
+
+    return Button
+end
+
+local FromButton = CreateDropdown(
+    "FROM_LANGUAGE",
+    UDim2.new(0.08712, 0, 0.62376, 0),
+    "Russian",
+    function(code, name)
+        FROM_LANGUAGE = code
+    end
+)
+
+local ToButton = CreateDropdown(
+    "TO_LANGUAGE",
+    UDim2.new(0.53409, 0, 0.62376, 0),
+    "Ukrainian",
+    function(code, name)
+        TO_LANGUAGE = code
+    end
+)
+
+local TranslateButton = Instance.new("TextButton")
+TranslateButton.Name = "Translate"
+TranslateButton.Parent = Frame
+TranslateButton.BorderSizePixel = 0
+TranslateButton.TextSize = 14
+TranslateButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+TranslateButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+TranslateButton.FontFace = Font.new(
+    "rbxasset://fonts/families/SourceSansPro.json",
+    Enum.FontWeight.Regular,
+    Enum.FontStyle.Normal
+)
+TranslateButton.Size = UDim2.new(0, 100, 0, 16)
+TranslateButton.Position = UDim2.new(0.4053, 0, 0.91, 0)
+TranslateButton.Text = "Translate"
+
+local function TranslateText(text, fromLanguage, toLanguage)
+    local HttpService = game:GetService("HttpService")
+
+    local url =
+        "https://translate.googleapis.com/translate_a/single?client=gtx"
+        .. "&sl=" .. fromLanguage
+        .. "&tl=" .. toLanguage
+        .. "&dt=t"
+        .. "&q=" .. HttpService:UrlEncode(text)
+
+    local response = game:HttpGet(url)
+    local data = HttpService:JSONDecode(response)
+
+    if data[1] and data[1][1] and data[1][1][1] then
+        return data[1][1][1]
+    end
+
+    return nil
+end
+
+TranslateButton.MouseButton1Click:Connect(function()
+
+    if Input.Text == "" then
+        Output.Text = "input is empty"
+        return
+    end
+
+    Output.Text = "translating..."
+
+    task.spawn(function()
+
+        local success, result, errorMessage = pcall(function()
+
+            return TranslateText(
+                Input.Text,
+                FROM_LANGUAGE,
+                TO_LANGUAGE
+            )
+
+        end)
+
+        if success then
+
+            if result then
+                Output.Text = result
+            else
+                Output.Text = errorMessage or "translation error"
+            end
+
+        else
+
+            Output.Text = "error: " .. tostring(result)
+
+        end
+
+    end)
+end)
+
+--// Перетаскивание GUI
+local function MakeDraggable(DragObject, MoveObject, onMove)
+    local dragging = false
+    local dragStart
+    local startPosition
+    local dragInput
+
+    DragObject.Active = true
+
+    DragObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = true
+            dragStart = input.Position
+            startPosition = MoveObject.Position
+            dragInput = input
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    DragObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+
+            local delta = input.Position - dragStart
+
+            MoveObject.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
+            )
+
+            if onMove then
+                onMove()
+            end
+        end
+    end)
+end
+
+MakeDraggable(Title, Frame)
+
+MakeDraggable(HiddenButton, HiddenButton, function()
+    Frame.Position = HiddenButton.Position
+end)
