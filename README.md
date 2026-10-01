@@ -1,6 +1,13 @@
 # open-source
 
 ```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/CUCUMBER%20Translate"))()
+```
+
+<img width="527" height="198" alt="image" src="https://github.com/user-attachments/assets/391e946b-7429-4844-af6e-c8aa0f38ab95" />
+
+
+```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/FPV%20in%20FTAP"))()
 ```
 
