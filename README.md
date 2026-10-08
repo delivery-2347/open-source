@@ -10,7 +10,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/Cucumber%20Sound"))()
 ```
 
-<img width="400" height="125" alt="image" src="https://github.com/user-attachments/assets/cb851511-bba4-4d26-928c-77df6017578a" />
+<img width="399" height="122" alt="image" src="https://github.com/user-attachments/assets/55d8accd-223f-436b-8e46-8c46ea799303" />
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/FPV%20in%20FTAP"))()
