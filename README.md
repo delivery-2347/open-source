@@ -1,11 +1,16 @@
 # open-source
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/CUCUMBER%20Translate"))() -- eso robotay
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/CUCUMBER%20Translate"))() -- eso dorobotati nado 
 ```
 
 <img width="527" height="198" alt="image" src="https://github.com/user-attachments/assets/391e946b-7429-4844-af6e-c8aa0f38ab95" />
 
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/Cucumber%20Sound"))()
+```
+
+<img width="400" height="125" alt="image" src="https://github.com/user-attachments/assets/cb851511-bba4-4d26-928c-77df6017578a" />
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/FPV%20in%20FTAP"))()
