@@ -1,0 +1,649 @@
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+local Values = {
+	"Hello","Hi","Hey","Oi","Yo","Heyo","Ayo","UwU","OwO","🙂","😄",
+	"Hooray","Yay","Weee",":]",":<",":>","Fun","Mountain","Yodel",
+	"Yodeling","Sing","Oof","Ouch","Dead","Ded","Kill","D:","Ow","D,:",
+	"Oops","Oop","😦","Cry","Crying","Weep","Weeping",":[",";-;","😢",
+	"Hmm","What?","?","Uhh","Huh","Ree","Lol","XD","Haha","imao","Ha",
+	">:)",">:D","Tehe","Hehe","Fling","Flung","Kick","Punch","Fight",
+	"Karate","Hit","Aaa","Ahh","Monke","Banana","Monkey","Ooo","Ooh",
+	"Spooky","Ghost","Spooked","Spook","Spooks","Grr","Growl",
+	"Growling","Growled","Mad","Annoy","Annoying","Annoyed","Ew","Poo",
+	"Stinky","Gross","Disgusting","Stench","Om","Nom","Eat","Eating",
+	"Ate","Yum","Yummy","1","One","2","Two","3","Three","4","Four","5",
+	"Five","Shh","Shush","Hush","Quiet","Silence","Dad","Daddy","Dada",
+	"Papa","Father","Mama","Mom","Mum","Mommy","Mother","Gun","Pistol",
+	"Shoot","Pew","Shot","Bullet","Grab","Grabbed","Grabbing","Hold",
+	"Drink","Drinks","Drinking","Drank","Slurp","Lick","Soda","Burp",
+	"Belch","Yeehaw","Bird","Birdy","Birdie","Birds","Birb","Chicken",
+	"Fly","Flying","Flew","Cough","Sneeze","Ahem",
+}
+
+local old = CoreGui:FindFirstChild("Cucumber Sound")
+if old then
+	old:Destroy()
+end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "Cucumber Sound"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.DisplayOrder = 999999
+gui.Parent = CoreGui
+
+local frame = Instance.new("Frame")
+frame.Name = "Main"
+frame.Size = UDim2.fromOffset(400, 124)
+frame.Position = UDim2.new(0.31789, 0, 0.42155, 0)
+frame.BorderSizePixel = 0
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.Parent = gui
+
+local selectAll = Instance.new("TextButton")
+selectAll.Size = UDim2.fromOffset(200, 14)
+selectAll.Position = UDim2.new(-0.00099, 0, 0.87914, 0)
+selectAll.BorderSizePixel = 0
+selectAll.TextStrokeColor3 = Color3.fromRGB(0, 255, 0)
+selectAll.TextSize = 14
+selectAll.TextColor3 = Color3.fromRGB(0, 255, 0)
+selectAll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+selectAll.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+selectAll.Text = "Select All"
+selectAll.Parent = frame
+
+local unselectAll = Instance.new("TextButton")
+unselectAll.Size = UDim2.fromOffset(200, 14)
+unselectAll.Position = UDim2.new(0.49901, 0, 0.87914, 0)
+unselectAll.BorderSizePixel = 0
+unselectAll.TextStrokeColor3 = Color3.fromRGB(0, 255, 0)
+unselectAll.TextSize = 14
+unselectAll.TextColor3 = Color3.fromRGB(0, 255, 0)
+unselectAll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+unselectAll.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+unselectAll.Text = "Unselect All"
+unselectAll.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.fromOffset(358, 15)
+title.Position = UDim2.fromOffset(0, 0)
+title.BorderSizePixel = 0
+title.TextSize = 14
+title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+title.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+title.TextColor3 = Color3.fromRGB(0, 255, 0)
+title.Text = "Cucumber Sound"
+title.TextXAlignment = Enum.TextXAlignment.Center
+title.Parent = frame
+
+local selectedLabel = Instance.new("TextLabel")
+selectedLabel.Size = UDim2.fromOffset(399, 16)
+selectedLabel.Position = UDim2.fromOffset(0, 35)
+selectedLabel.BorderSizePixel = 0
+selectedLabel.TextSize = 14
+selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+selectedLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+selectedLabel.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+selectedLabel.TextColor3 = Color3.fromRGB(0, 128, 0)
+selectedLabel.Text = "0 selected"
+selectedLabel.Parent = frame
+
+local dropdown = Instance.new("TextButton")
+dropdown.Size = UDim2.fromOffset(400, 20)
+dropdown.Position = UDim2.fromOffset(0, 15)
+dropdown.BorderSizePixel = 0
+dropdown.TextSize = 14
+dropdown.TextColor3 = Color3.fromRGB(0, 255, 0)
+dropdown.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+dropdown.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+dropdown.Text = "Select Sounds"
+dropdown.Parent = frame
+
+local slider = Instance.new("Frame")
+slider.Size = UDim2.fromOffset(400, 20)
+slider.Position = UDim2.fromOffset(0, 51)
+slider.BorderSizePixel = 0
+slider.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+slider.Parent = frame
+
+local sliderText = Instance.new("TextLabel")
+sliderText.Size = UDim2.fromOffset(400, 15)
+sliderText.Position = UDim2.fromOffset(0, 0)
+sliderText.BackgroundTransparency = 1
+sliderText.BorderSizePixel = 0
+sliderText.TextSize = 14
+sliderText.TextColor3 = Color3.fromRGB(0, 255, 0)
+sliderText.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+sliderText.Text = "Delay: 0.50s"
+sliderText.Parent = slider
+
+local sliderBack = Instance.new("Frame")
+sliderBack.Size = UDim2.new(1, -8, 0, 3)
+sliderBack.Position = UDim2.fromOffset(4, 16)
+sliderBack.BorderSizePixel = 0
+sliderBack.BackgroundColor3 = Color3.fromRGB(0, 90, 0)
+sliderBack.Parent = slider
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(0.25, 0, 1, 0)
+sliderFill.BorderSizePixel = 0
+sliderFill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+sliderFill.Parent = sliderBack
+
+local sliderKnob = Instance.new("Frame")
+sliderKnob.Size = UDim2.fromOffset(7, 7)
+sliderKnob.Position = UDim2.new(0.25, -3, 0.5, -3)
+sliderKnob.BorderSizePixel = 0
+sliderKnob.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+sliderKnob.Parent = sliderBack
+
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.fromOffset(400, 35)
+toggle.Position = UDim2.fromOffset(0, 74)
+toggle.BorderSizePixel = 0
+toggle.TextSize = 14
+toggle.TextColor3 = Color3.fromRGB(0, 255, 0)
+toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+toggle.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+toggle.Text = "OFF"
+toggle.Parent = frame
+
+local destroyButton = Instance.new("ImageButton")
+destroyButton.Size = UDim2.fromOffset(20, 15)
+destroyButton.Position = UDim2.new(0.9475, 0, 0, 0)
+destroyButton.BorderSizePixel = 0
+destroyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+destroyButton.Image = "rbxassetid://92880046539048"
+destroyButton.Parent = frame
+
+local closeButton = Instance.new("ImageButton")
+closeButton.Size = UDim2.fromOffset(20, 15)
+closeButton.Position = UDim2.new(0.895, 0, 0, 0)
+closeButton.BorderSizePixel = 0
+closeButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+closeButton.Image = "rbxassetid://89588127151337"
+closeButton.Parent = frame
+
+local selectedSounds = {}
+local selectedOrder = {}
+local soundButtons = {}
+
+local function selectedCount()
+	local count = 0
+
+	for _ in pairs(selectedSounds) do
+		count += 1
+	end
+
+	return count
+end
+
+local function updateSelectedText()
+	local count = selectedCount()
+
+	selectedLabel.Text = string.format("%d selected", count)
+
+	if count == 0 then
+		dropdown.Text = "Select Sounds"
+	elseif count == 1 then
+		local onlyOne
+
+		for value in pairs(selectedSounds) do
+			onlyOne = value
+			break
+		end
+
+		dropdown.Text = tostring(onlyOne)
+	else
+		dropdown.Text = string.format("%d sounds selected", count)
+	end
+end
+
+local function updateSoundButton(button, value)
+	if selectedSounds[value] then
+		button.Text = "✓ " .. value
+		button.TextColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		button.Text = "  " .. value
+		button.TextColor3 = Color3.fromRGB(0, 180, 0)
+	end
+end
+
+local dropdownGui = Instance.new("Frame")
+dropdownGui.Name = "Dropdown"
+dropdownGui.Size = UDim2.fromOffset(400, 90)
+dropdownGui.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+dropdownGui.BorderSizePixel = 0
+dropdownGui.Visible = false
+dropdownGui.ZIndex = 100
+dropdownGui.Parent = gui
+
+local dropdownStroke = Instance.new("UIStroke")
+dropdownStroke.Color = Color3.fromRGB(0, 90, 0)
+dropdownStroke.Thickness = 1
+dropdownStroke.Parent = dropdownGui
+
+local list = Instance.new("ScrollingFrame")
+list.Size = UDim2.new(1, -2, 1, -2)
+list.Position = UDim2.fromOffset(1, 1)
+list.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+list.BorderSizePixel = 0
+list.ScrollBarThickness = 2
+list.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 0)
+list.ScrollingEnabled = false
+list.ZIndex = 101
+list.Parent = dropdownGui
+
+local layout = Instance.new("UIListLayout")
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 0)
+layout.Parent = list
+
+for index, value in ipairs(Values) do
+	local button = Instance.new("TextButton")
+
+	button.Size = UDim2.new(1, -2, 0, 21)
+	button.BorderSizePixel = 0
+	button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	button.TextColor3 = Color3.fromRGB(0, 180, 0)
+	button.TextSize = 14
+	button.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+	button.TextXAlignment = Enum.TextXAlignment.Left
+	button.Text = "  " .. value
+	button.LayoutOrder = index
+	button.ZIndex = 102
+	button.Parent = list
+
+	soundButtons[value] = button
+
+	button.MouseButton1Click:Connect(function()
+		if selectedSounds[value] then
+			selectedSounds[value] = nil
+
+			for i = #selectedOrder, 1, -1 do
+				if selectedOrder[i] == value then
+					table.remove(selectedOrder, i)
+					break
+				end
+			end
+		else
+			selectedSounds[value] = true
+			table.insert(selectedOrder, value)
+		end
+
+		updateSoundButton(button, value)
+		updateSelectedText()
+	end)
+end
+
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	list.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y)
+end)
+
+local scrollTarget = 0
+
+local function getMaxScroll()
+	return math.max(0, layout.AbsoluteContentSize.Y - list.AbsoluteSize.Y)
+end
+
+local function smoothScroll(amount)
+	local maxScroll = getMaxScroll()
+
+	scrollTarget = math.clamp(
+		scrollTarget + amount,
+		0,
+		maxScroll
+	)
+
+	TweenService:Create(
+		list,
+		TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{
+			CanvasPosition = Vector2.new(0, scrollTarget)
+		}
+	):Play()
+end
+
+list.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseWheel then
+		smoothScroll(-input.Position.Z * 22)
+	end
+end)
+
+for _, button in pairs(soundButtons) do
+	button.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseWheel then
+			smoothScroll(-input.Position.Z * 22)
+		end
+	end)
+end
+
+local function positionDropdown()
+	local absolutePosition = frame.AbsolutePosition
+
+	dropdownGui.Position = UDim2.fromOffset(
+		absolutePosition.X,
+		absolutePosition.Y + 35
+	)
+end
+
+frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+	if dropdownGui.Visible then
+		positionDropdown()
+	end
+end)
+
+dropdown.MouseButton1Click:Connect(function()
+	dropdownGui.Visible = not dropdownGui.Visible
+
+	if dropdownGui.Visible then
+		positionDropdown()
+	else
+		scrollTarget = 0
+		list.CanvasPosition = Vector2.zero
+	end
+end)
+
+selectAll.MouseButton1Click:Connect(function()
+	table.clear(selectedSounds)
+	table.clear(selectedOrder)
+
+	for _, value in ipairs(Values) do
+		selectedSounds[value] = true
+		table.insert(selectedOrder, value)
+
+		local button = soundButtons[value]
+
+		if button then
+			updateSoundButton(button, value)
+		end
+	end
+
+	updateSelectedText()
+end)
+
+unselectAll.MouseButton1Click:Connect(function()
+	table.clear(selectedSounds)
+	table.clear(selectedOrder)
+
+	for _, value in ipairs(Values) do
+		local button = soundButtons[value]
+
+		if button then
+			updateSoundButton(button, value)
+		end
+	end
+
+	updateSelectedText()
+end)
+
+local delayTime = 0.5
+local sliderDragging = false
+
+local function updateSlider(x)
+	local percent = math.clamp(
+		(x - sliderBack.AbsolutePosition.X) / sliderBack.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	delayTime = percent * 2
+
+	sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+	sliderKnob.Position = UDim2.new(percent, -3, 0.5, -3)
+	sliderText.Text = string.format("Delay: %.2fs", delayTime)
+end
+
+sliderBack.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		sliderDragging = true
+		updateSlider(input.Position.X)
+	end
+end)
+
+sliderKnob.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		sliderDragging = true
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if sliderDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		updateSlider(input.Position.X)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		sliderDragging = false
+	end
+end)
+
+local running = false
+local workerId = 0
+
+local function getChannel()
+	local channels = TextChatService:FindFirstChild("TextChannels")
+
+	if not channels then
+		return nil
+	end
+
+	return channels:FindFirstChild("RBXGeneral")
+end
+
+local function sendSound(value)
+	local channel = getChannel()
+
+	if not channel then
+		return
+	end
+
+	task.spawn(function()
+		pcall(function()
+			channel:SendAsync("/w . " .. tostring(value))
+		end)
+	end)
+end
+
+local function getSelectedSounds()
+	local result = {}
+
+	for _, value in ipairs(selectedOrder) do
+		if selectedSounds[value] then
+			table.insert(result, value)
+		end
+	end
+
+	return result
+end
+
+local function startWorker()
+	workerId += 1
+
+	local currentWorker = workerId
+
+	task.spawn(function()
+		while running and currentWorker == workerId and gui.Parent do
+			local sounds = getSelectedSounds()
+
+			if #sounds == 0 then
+				task.wait(0.05)
+				continue
+			end
+
+			for _, value in ipairs(sounds) do
+				if not running or currentWorker ~= workerId then
+					break
+				end
+
+				sendSound(value)
+
+				if delayTime > 0 then
+					task.wait(delayTime)
+				else
+					task.wait()
+				end
+			end
+		end
+	end)
+end
+
+toggle.MouseButton1Click:Connect(function()
+	running = not running
+
+	if running then
+		toggle.Text = "ON"
+		startWorker()
+	else
+		workerId += 1
+		toggle.Text = "OFF"
+	end
+end)
+
+local popup = Instance.new("TextButton")
+popup.Name = "Popup"
+popup.Size = UDim2.fromOffset(135, 20)
+popup.Position = frame.Position
+popup.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+popup.BorderSizePixel = 0
+popup.TextColor3 = Color3.fromRGB(0, 255, 0)
+popup.TextSize = 14
+popup.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+popup.Text = "Cucumber Sound"
+popup.Visible = false
+popup.ZIndex = 200
+popup.Parent = gui
+
+local popupStroke = Instance.new("UIStroke")
+popupStroke.Color = Color3.fromRGB(0, 128, 0)
+popupStroke.Thickness = 1
+popupStroke.Parent = popup
+
+local draggingObject = nil
+local dragStart = nil
+local dragObjectStart = nil
+local dragMoved = false
+
+local function beginDrag(object, input)
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return
+	end
+
+	draggingObject = object
+	dragStart = input.Position
+	dragObjectStart = object.AbsolutePosition
+	dragMoved = false
+end
+
+local function updateDrag(input)
+	if not draggingObject then
+		return
+	end
+
+	if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+		return
+	end
+
+	local delta = input.Position - dragStart
+
+	if math.abs(delta.X) > 2 or math.abs(delta.Y) > 2 then
+		dragMoved = true
+	end
+
+	draggingObject.Position = UDim2.fromOffset(
+		dragObjectStart.X + delta.X,
+		dragObjectStart.Y + delta.Y
+	)
+end
+
+local function endDrag()
+	if not draggingObject then
+		return false
+	end
+
+	local wasMoved = dragMoved
+
+	draggingObject = nil
+	dragStart = nil
+	dragObjectStart = nil
+	dragMoved = false
+
+	return wasMoved
+end
+
+title.InputBegan:Connect(function(input)
+	beginDrag(frame, input)
+end)
+
+popup.InputBegan:Connect(function(input)
+	beginDrag(popup, input)
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	updateDrag(input)
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		local wasMoved = endDrag()
+
+		if popup.Visible and wasMoved then
+			popup:SetAttribute("WasDragged", true)
+
+			task.delay(0.05, function()
+				if popup then
+					popup:SetAttribute("WasDragged", false)
+				end
+			end)
+		end
+	end
+end)
+
+popup.MouseButton1Click:Connect(function()
+	if popup:GetAttribute("WasDragged") then
+		return
+	end
+
+	local popupPosition = popup.AbsolutePosition
+
+	frame.Position = UDim2.fromOffset(
+		popupPosition.X,
+		popupPosition.Y
+	)
+
+	frame.Visible = true
+	popup.Visible = false
+	dropdownGui.Visible = false
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+	local currentPosition = frame.AbsolutePosition
+
+	popup.Position = UDim2.fromOffset(
+		currentPosition.X,
+		currentPosition.Y
+	)
+
+	frame.Visible = false
+	dropdownGui.Visible = false
+	popup.Visible = true
+end)
+
+destroyButton.MouseButton1Click:Connect(function()
+	running = false
+	workerId += 1
+	gui:Destroy()
+end)
+
+updateSelectedText()
+
+task.defer(function()
+	updateSlider(
+		sliderBack.AbsolutePosition.X + sliderBack.AbsoluteSize.X * 0.25
+	)
+end)
