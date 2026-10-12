@@ -1,4 +1,4 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + melkie bag s esp
+-- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + melkie bag s esp + obnovil Volume sound teperi to 0 - 100%
 local UIS = game:GetService("UserInputService")
 
 local pcortuluhon
@@ -264,10 +264,10 @@ elseif pcortuluhon == "rtuluhon" then
 
 end
 
-local Volumesound = Section:NewSlider("Volume sound", "Регулировка громкости", 10, 0, function(v)
-    targetVolume = v
+local Volumesound = Section:NewSlider("Volume sound(%)", "Регулировка громкости", 100, 0, function(v)
+    targetVolume = v / 100
     if active then
-        sound.Volume = v
+        sound.Volume = targetVolume
     end
 end)
 
@@ -411,7 +411,7 @@ cameraFrameX:SetValue(0)
 cameraFrameY:SetValue(1)
 cameraFrameZ:SetValue(-2.5)
 speedsliderfph:SetValue(200)
-Volumesound:SetValue(2.5)
+Volumesound:SetValue(50)
 
 if pcortuluhon == "pc" then
     Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.C, function()
