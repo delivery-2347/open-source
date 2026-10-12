@@ -11,6 +11,8 @@ obnovil Volume sound teperi to 0 - 100%
 pohuksil bag s UpdateOutline -- updateOutline -- esp 
 +
 ya suko ne znaya kak obesniti no eto nastroiki rrazpolozeniya kameeri lusi
++
+udalenie staroi bomb (potom dabovlya proverku na bomb)
 ]]--
 local UIS = game:GetService("UserInputService")
 local pcortuluhon
@@ -109,7 +111,7 @@ local function restoreCamera()
             camera.CameraSubject = humanoid
         end
     end
-    
+    game:GetService("ReplicatedStorage").MenuToys.DestroyToy:FireServer(bomb)
     overlay.Visible = false
     bomb = nil
     body = nil
