@@ -9,6 +9,8 @@ melkie bag s esp
 obnovil Volume sound teperi to 0 - 100%
 +
 pohuksil bag s UpdateOutline -- updateOutline -- esp 
++
+ya suko ne znaya kak obesniti no eto nastroiki rrazpolozeniya kameeri lusi
 ]]--
 local UIS = game:GetService("UserInputService")
 local pcortuluhon
@@ -422,24 +424,21 @@ local Section = Tab:NewSection("by CUCUMBER")
 local Tab = Window:NewTab("settings")
 local Section = Tab:NewSection("settings")
 
-local cameraFrameX = Section:NewSlider("camera CFrame X", "Регулировка camera", 10, -10, function(v)
-    cameraCFrameX = v
+local cameraFrameX = Section:NewSlider("camera CFrame X", "Регулировка camera", 50, -50, function(v)
     if active then
-        cameraCFrameX = v
+        cameraCFrameX = v / 10
     end
 end)
 
-local cameraFrameY = Section:NewSlider("camera CFrame Y", "Регулировка camera", 10, -10, function(v)
-    cameraCFrameY = v
+local cameraFrameY = Section:NewSlider("camera CFrame Y", "Регулировка camera", 50, -50, function(v)
     if active then
-        cameraCFrameY = v
+        cameraCFrameY = v / 10
     end
 end)
 
-local cameraFrameZ = Section:NewSlider("camera CFrame Z", "Регулировка camera", 10, -10, function(v)
-    cameraCFrameZ = v
+local cameraFrameZ = Section:NewSlider("camera CFrame Z", "Регулировка camera", 50, -50, function(v)
     if active then
-        cameraCFrameZ = v
+        cameraCFrameZ = v / 10
     end
 end)
 
