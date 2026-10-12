@@ -1,8 +1,17 @@
--- sori za Iidealinie skript na nasinku sam delal toliko gui Ii dobavleno YA ZABIL LOL + ispravlen bag s vzrivom bambi + melkie bag s esp + obnovil Volume sound teperi to 0 - 100%
+-- sori za IIdealinie skript na nasinku sam delal toliko gui Ii 
+--[[
+dobavleno YA ZABIL LOL
++
+ispravlen bag s vzrivom bambi
++
+melkie bag s esp
++
+obnovil Volume sound teperi to 0 - 100%
++
+pohuksil bag s UpdateOutline -- updateOutline -- esp 
+]]--
 local UIS = game:GetService("UserInputService")
-
 local pcortuluhon
-
 if UIS.KeyboardEnabled then
     print("🖥️ ПК")
     pcortuluhon = "pc"
@@ -10,7 +19,6 @@ elseif UIS.TouchEnabled and not UIS.KeyboardEnabled then
     print("📱 Телефон / планшет")
     pcortuluhon = "rtuluhon"
 end
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -62,6 +70,7 @@ overlay.BorderSizePixel = 0
 overlay.Visible = false
 
 local lines = {}
+
 for i = 1, 8 do
     local line = Instance.new("Frame")
     line.Parent = overlay
@@ -70,7 +79,6 @@ for i = 1, 8 do
     line.BorderSizePixel = 0
     lines[i] = line
 end
-
 
 local sound = camera:FindFirstChild("DroneFlySound")
 
@@ -194,7 +202,7 @@ if pcortuluhon == "pc" then
         end
     end)
 elseif pcortuluhon == "rtuluhon" then
-    Section:NewButton("tp", "TP IN Z", function()
+    Section:NewButton("launch / restoreCamera", "Запустить или вернуть камеру", function()
         if not activehut then return end
         if not active then
             launch()
@@ -293,8 +301,19 @@ local UpdateOutline = (function()
     local lastState = nil
     local boxes = {}
     local character = nil
+    local enabled = false
 
-    return function(activated)
+    local function updateOutline(activated)
+        enabled = activated
+
+        local currentCharacter = player.Character
+
+        if currentCharacter ~= character then
+            character = currentCharacter
+            boxes = {}
+            lastState = nil
+        end
+
         if lastState == activated then
             return
         end
@@ -343,6 +362,23 @@ local UpdateOutline = (function()
             end
         end
     end
+
+    player.CharacterAdded:Connect(function(newCharacter)
+        character = newCharacter
+        boxes = {}
+        lastState = nil
+
+        task.spawn(function()
+            newCharacter:WaitForChild("Torso", 10)
+            task.wait()
+
+            if enabled and player.Character == newCharacter then
+                updateOutline(true)
+            end
+        end)
+    end)
+
+    return updateOutline
 end)()
 
 RunService.RenderStepped:Connect(function()
@@ -515,6 +551,11 @@ repeat
     task.wait(0.05)
 until FPVGui
 FPVGui.Destroying:Connect(function()
+    cameraFrameX:SetValue(0)
+    cameraFrameY:SetValue(0)
+    cameraFrameZ:SetValue(0)
+    speedsliderfph:SetValue(0)
+    Volumesound:SetValue(0)
     restoreCamera()
     activehut = false
     print("Закрытие:", FPVGui)
