@@ -5,7 +5,9 @@ local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local Humanoid = character:WaitForChild("Humanoid")
 local HRP = character:WaitForChild("HumanoidRootPart")
+
 -- ReplicatedStorage
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FireCD = ReplicatedStorage.Remotes.FireCD
@@ -143,17 +145,18 @@ local toggl_Blueprints_Auto_farming
 local toggl_custom_Stochastic_Blueprint_Remuneration
 localPlayer.CharacterAdded:Connect(function(char)
     character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+	Humanoid = character:WaitForChild("Humanoid")
     HRP = character:WaitForChild("HumanoidRootPart")
 end)
 
 local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
 
 local CUCUMBER = {
-    SchemeColor = Color3.fromRGB(45, 160, 95),
-    Background = Color3.fromRGB(8, 18, 12),
-    Header = Color3.fromRGB(12, 30, 20),
-    TextColor = Color3.fromRGB(230, 230, 230),
-    ElementColor = Color3.fromRGB(18, 55, 38)
+    SchemeColor = Color3.fromRGB(45, 150, 85),
+    Background = Color3.fromRGB(5, 10, 7),
+    Header = Color3.fromRGB(9, 20, 14),
+    TextColor = Color3.fromRGB(225, 230, 227),
+    ElementColor = Color3.fromRGB(16, 36, 25)
 }
 
 local Window = Kavo.CreateLib("CRTSCC HUB", CUCUMBER)
@@ -585,6 +588,65 @@ Section:NewButton("give Zip 22", "Подсказка", function()
 	end	
 end)
 
+local Tab = Window:NewTab("control cart")
+
+local Section = Tab:NewSection("by CUCUMBER")
+
+local carotoot = Section:NewLabel("log")
+
+do
+	local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
+	local cartall = 67
+	local cart = 67
+	local karr = 67
+
+	local function GetPartUnderPlayer()
+	    local char = game.Players.LocalPlayer.Character
+	    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	    if not hrp then return nil end
+
+	    local params = RaycastParams.new()
+	    params.FilterType = Enum.RaycastFilterType.Exclude
+	    params.FilterDescendantsInstances = {char}
+
+	    local result = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), params)
+	    return result and result.Instance
+	end
+
+	local function getcart()
+	    local cartall = GetPartUnderPlayer()
+	    local cart = cartall and cartall.Parent.Parent.Parent
+
+	    if cart and cart.Name == "BasicCart" then
+	        carotoot:UpdateLabel(cart.Name .. " da")
+	        return cart
+	    else
+	        carotoot:UpdateLabel(cart.Name .. " eto ne Seat")
+	    end
+	end
+
+	Section:NewButton("Cart: update", "Подсказка", function()
+	    karr = getcart()
+	    if not Humanoid.Sit then
+	        carotoot:UpdateLabel("bro sit in cart please")
+	    elseif karr.Name == "BasicCart" then
+	        karr = karr.Controls
+	    end 
+	end)
+
+	Section:NewButton("Cart: Down", "Подсказка", function()
+	    FireCD:FireServer(karr.Down.ClickDetector.Clicked)
+	end)
+
+	Section:NewButton("Cart: On/Off", "Подсказка", function()
+	    FireCD:FireServer(karr.On.ClickDetector.Clicked)
+	end)
+
+	Section:NewButton("Cart: Up", "Подсказка", function()
+	    FireCD:FireServer(karr.Up.ClickDetector.Clicked)
+	end)
+end
+
 local Tab = Window:NewTab("ADMIN ARBUZ")
 
 local Section = Tab:NewSection("by CUCUMBER") 
@@ -594,7 +656,6 @@ Section:NewButton("Black Holes", "Подсказка", function()
 	    workspace["Black Holes"]["Black Hole"].Activate
 	)
 end)
-
 
 local Tab = Window:NewTab("WHAT??")
 
