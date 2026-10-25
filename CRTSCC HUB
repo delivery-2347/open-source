@@ -121,7 +121,23 @@ function SISTEM_uvidomleniya(title, content, duration, iconId, button1, button2,
     game:GetService("StarterGui"):SetCore("SendNotification", notification)
 end
 
-task.spawn(function() SISTEM_uvidomleniya("download assist", "67", 0, 101789279594734) ;SISTEM_uvidomleniya("download assist", "67", 0, 113093122) ;SISTEM_uvidomleniya("download assist", "67", 0, 93390660159546) end)
+task.spawn(function() SISTEM_uvidomleniya("download assist", "67", 0, 101789279594734) ;SISTEM_uvidomleniya("download assist", "67", 0, 113093122) ;SISTEM_uvidomleniya("download assist", "67", 0, 93390660159546) ;SISTEM_uvidomleniya("download assist", "67", 0, 119528748990662) end)
+
+local function ParseCoins(text)
+    text = tostring(text):upper():gsub(",", ""):gsub("%s+", "")
+    local number = tonumber(text:match("[%d%.]+"))
+    local suffix = text:match("[KMBT]$")
+
+    if not number then return 0 end
+
+    local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12}
+    return math.floor(number * (multipliers[suffix] or 1))
+end
+
+local function getcoins()
+    return ParseCoins(game:GetService("Players").LocalPlayer.PlayerGui.SalvageGUI.Display.Counter.Labels.Points.Counter.Text)
+end
+
 -- togle 
 local toggl_Blueprints_Auto_farming
 local toggl_custom_Stochastic_Blueprint_Remuneration
@@ -217,7 +233,7 @@ do
 	        end
 	    end
 	end)
-	Section:NewButton("opening a door: first method", "Подсказка", function()
+	Section:NewButton("Blueprints : first Auto-farming", "Подсказка", function()
 		for _, obj in ipairs(spawn:GetDescendants()) do
 		    Blueprints(obj)
 		end
@@ -225,373 +241,318 @@ do
 end
 
 do
-	local folders = {
-	    workspace.Islands.CartDepot.CartDepotDecor,
-	    workspace.LooseItems,
-	    workspace.Carts,
-		workspace.Islands.Scrapyard.Decor,
-		workspace.Islands.Scrapyard.SpawnableParts
-	}
+    local Players = game:GetService("Players")
+    local Player = Players.LocalPlayer
+    local Remote = ReplicatedStorage:FindFirstChild("Remotes")
+    Remote = Remote and Remote:FindFirstChild("MouseLocationTransciever")
 
-	Section:NewKeybind("Salvage Object : instant", "Подсказка", Enum.KeyCode.RightShift, function()
-		if not ENEIBLE then return end
-		for _, folder in ipairs(folders) do
-		    for _, obj in ipairs(folder:GetChildren()) do
-		        pcall(function()
-		            ReplicatedStorage.Remotes.MouseLocationTransciever:FireServer(obj)
-		        end)
-		    end
-		end
-	end)
+    local function GetFolders()
+        local Folders = {}
+        local Islands = workspace:FindFirstChild("Islands")
+        local CartDepot = Islands and Islands:FindFirstChild("CartDepot")
+        local Scrapyard = Islands and Islands:FindFirstChild("Scrapyard")
+
+        local function AddFolder(Parent, Name)
+            local Folder = Parent and Parent:FindFirstChild(Name)
+            if Folder then table.insert(Folders, Folder) end
+        end
+
+        AddFolder(CartDepot, "CartDepotDecor")
+        AddFolder(workspace, "LooseItems")
+        AddFolder(workspace, "Carts")
+        AddFolder(Scrapyard, "Decor")
+        AddFolder(Scrapyard, "SpawnableParts")
+
+        return Folders
+    end
+
+    local function GetPosition(Obj)
+        if Obj:IsA("BasePart") then
+            return Obj.Position
+        elseif Obj:IsA("Model") then
+            return Obj:GetPivot().Position
+        elseif Obj:IsA("Tool") then
+            local Handle = Obj:FindFirstChild("Handle")
+            return Handle and Handle.Position
+        end
+    end
+
+    local function ScanFolder(Folder, Origin)
+        for _, Obj in ipairs(Folder:GetDescendants()) do
+            local Pos = GetPosition(Obj)
+            if Pos and (Pos - Origin).Magnitude <= 15 then
+                pcall(function()
+                    Remote:FireServer(Obj)
+                end)
+            end
+        end
+    end
+
+    Section:NewKeybind("Salvage Object : instant", "Подсказка", Enum.KeyCode.G, function()
+        if not ENEIBLE or not Remote then return end
+
+        local Char = Player.Character
+        local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+        if not HRP then return end
+
+        for _, Folder in ipairs(GetFolders()) do
+            ScanFolder(Folder, HRP.Position)
+        end
+    end)
 end
 
 do
-	local PlayerGui = localPlayer:WaitForChild("PlayerGui")
-	local Components = ReplicatedStorage:WaitForChild("Components")
-	local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-	local RewardEvent = Remotes:WaitForChild("Remuneration")
-	
-	local NOTIFICATION_TIME = 3
-	local NOTIFICATION_WIDTH = 260
-	
-	local Coins = {
-	    Common = 20,
-	    Uncommon = 40,
-	    Rare = 100,
-	    Epic = 200,
-	    Legendary = 750,
-	}
-	
-	local Colors = {
-	    Common = Color3.fromRGB(180, 180, 180),
-	    Uncommon = Color3.fromRGB(80, 200, 120),
-	    Rare = Color3.fromRGB(80, 150, 255),
-	    Epic = Color3.fromRGB(185, 100, 255),
-	    Legendary = Color3.fromRGB(255, 177, 65),
-	    Hidden = Color3.fromRGB(255, 80, 100),
-	}
-	
-	local CustomEnabled = false
-	local NotificationId = 0
-	
-	local OldGui
-	local OldMain
-	local OldGuiEnabled
-	local OldMainDisabled
-	
-	local ProtectionConnections = {}
-	local GuiAddedConnection
-	local RewardConnection
-	
-	local function Disconnect(Connection)
-	    if Connection then
-	        Connection:Disconnect()
-	    end
-	end
-	
-	local function ClearProtection()
-	    for _, Connection in ipairs(ProtectionConnections) do
-	        Disconnect(Connection)
-	    end
-	
-	    table.clear(ProtectionConnections)
-	end
-	
-	local function FindMain(Gui)
-	    local Frame1 = Gui:FindFirstChild("Frame")
-	    local Frame2 = Frame1 and Frame1:FindFirstChild("Frame")
-	    local Main = Frame2 and Frame2:FindFirstChild("Main")
-	
-	    if Main and Main:IsA("LocalScript") then
-	        return Main
-	    end
-	
-	    return nil
-	end
-	
-	local function ProtectMain(Main)
-	    if not Main or not Main:IsA("LocalScript") then
-	        return
-	    end
-	
-	    if OldMain == Main then
-	        Main.Disabled = true
-	        return
-	    end
-	
-	    OldMain = Main
-	    OldMainDisabled = Main.Disabled
-	
-	    table.insert(
-	        ProtectionConnections,
-	        Main:GetPropertyChangedSignal("Disabled"):Connect(function()
-	            if CustomEnabled and not Main.Disabled then
-	                Main.Disabled = true
-	            end
-	        end)
-	    )
-	
-	    Main.Disabled = true
-	end
-	
-	local function ProtectOldGui(Gui)
-	    if not CustomEnabled or not Gui then
-	        return
-	    end
-	
-	    if OldGui ~= Gui then
-	        ClearProtection()
-	
-	        OldGui = Gui
-	        OldGuiEnabled = Gui.Enabled
-	        OldMain = nil
-	        OldMainDisabled = nil
-	
-	        table.insert(
-	            ProtectionConnections,
-	            Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
-	                if CustomEnabled and Gui.Enabled then
-	                    Gui.Enabled = false
-	                end
-	            end)
-	        )
-	
-	        table.insert(
-	            ProtectionConnections,
-	            Gui.DescendantAdded:Connect(function(Object)
-	                if CustomEnabled
-	                    and Object.Name == "Main"
-	                    and Object:IsA("LocalScript") then
-	
-	                    task.defer(function()
-	                        if CustomEnabled and Object.Parent then
-	                            local FoundMain = FindMain(Gui)
-	
-	                            if FoundMain then
-	                                ProtectMain(FoundMain)
-	                            end
-	                        end
-	                    end)
-	                end
-	            end)
-	        )
-	    end
-	
-	    local Main = FindMain(Gui)
-	
-	    if Main then
-	        ProtectMain(Main)
-	    end
-	
-	    if OldMain then
-	        OldMain.Disabled = true
-	    end
-	
-	    Gui.Enabled = false
-	end
-	
-	local PreviousGui = PlayerGui:FindFirstChild("StochasticNotificationGUI")
-	
-	if PreviousGui then
-	    PreviousGui:Destroy()
-	end
-	
-	local Gui = Instance.new("ScreenGui")
-	Gui.Name = "StochasticNotificationGUI"
-	Gui.ResetOnSpawn = false
-	Gui.IgnoreGuiInset = true
-	Gui.DisplayOrder = 999999
-	Gui.Enabled = false
-	Gui.Parent = PlayerGui
-	
-	local Frame = Instance.new("Frame")
-	Frame.Name = "Notification"
-	Frame.Size = UDim2.fromOffset(NOTIFICATION_WIDTH, 82)
-	Frame.Position = UDim2.new(1, -15, 0.5, 0)
-	Frame.AnchorPoint = Vector2.new(1, 0.5)
-	Frame.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
-	Frame.BorderSizePixel = 0
-	Frame.Visible = false
-	Frame.Parent = Gui
-	
-	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
-	
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Thickness = 1
-	Stroke.Color = Color3.fromRGB(80, 200, 120)
-	Stroke.Transparency = 0.2
-	Stroke.Parent = Frame
-	
-	local Accent = Instance.new("Frame")
-	Accent.Size = UDim2.new(0, 3, 1, -16)
-	Accent.Position = UDim2.fromOffset(6, 8)
-	Accent.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
-	Accent.BorderSizePixel = 0
-	Accent.Parent = Frame
-	
-	Instance.new("UICorner", Accent).CornerRadius = UDim.new(1, 0)
-	
-	local Header = Instance.new("TextLabel")
-	Header.Position = UDim2.fromOffset(16, 7)
-	Header.Size = UDim2.new(1, -25, 0, 17)
-	Header.BackgroundTransparency = 1
-	Header.Font = Enum.Font.GothamSemibold
-	Header.TextSize = 11
-	Header.TextColor3 = Color3.fromRGB(155, 165, 175)
-	Header.TextXAlignment = Enum.TextXAlignment.Left
-	Header.Parent = Frame
-	
-	local ItemName = Instance.new("TextLabel")
-	ItemName.Position = UDim2.fromOffset(16, 27)
-	ItemName.Size = UDim2.new(1, -25, 0, 23)
-	ItemName.BackgroundTransparency = 1
-	ItemName.Font = Enum.Font.GothamBold
-	ItemName.TextSize = 15
-	ItemName.TextColor3 = Color3.fromRGB(240, 240, 245)
-	ItemName.TextXAlignment = Enum.TextXAlignment.Left
-	ItemName.TextTruncate = Enum.TextTruncate.AtEnd
-	ItemName.Parent = Frame
-	
-	local Details = Instance.new("TextLabel")
-	Details.Position = UDim2.fromOffset(16, 54)
-	Details.Size = UDim2.new(1, -25, 0, 17)
-	Details.BackgroundTransparency = 1
-	Details.Font = Enum.Font.Gotham
-	Details.TextSize = 11
-	Details.TextColor3 = Color3.fromRGB(180, 185, 195)
-	Details.TextXAlignment = Enum.TextXAlignment.Left
-	Details.TextTruncate = Enum.TextTruncate.AtEnd
-	Details.Parent = Frame
-	
-	local function Notify(Name, IsDuplicate)
-	    if not CustomEnabled then
-	        return
-	    end
-	
-	    Name = tostring(Name or "Unknown")
-	
-	    local Component = Components:FindFirstChild(Name)
-	    local Rarity = Component and Component:GetAttribute("Rarity")
-	    Rarity = Rarity or "Common"
-	
-	    local Color = Colors[Rarity] or Colors.Common
-	
-	    Header.Text = IsDuplicate == true
-	        and "DUPLICATE"
-	        or "COMPONENT OBTAINED"
-	
-	    ItemName.Text = Name
-	    ItemName.TextColor3 = Color
-	
-	    Accent.BackgroundColor3 = Color
-	    Stroke.Color = Color
-	
-	    if IsDuplicate == true then
-	        local Amount = Coins[Rarity]
-	
-	        Details.Text = Amount
-	            and ("Converted to " .. Amount .. " Canny Coins")
-	            or "Duplicate component"
-	    else
-	        Details.Text = "Rarity: " .. tostring(Rarity)
-	    end
-	
-	    NotificationId += 1
-	    local CurrentId = NotificationId
-	
-	    Frame.Visible = true
-	
-	    task.delay(NOTIFICATION_TIME, function()
-	        if NotificationId == CurrentId and Frame.Parent then
-	            Frame.Visible = false
+    local PlayerGui = localPlayer:WaitForChild("PlayerGui")
+    local Components = ReplicatedStorage:WaitForChild("Components")
+    local RewardEvent = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Remuneration")
+
+    local NOTIFICATION_TIME, NOTIFICATION_WIDTH = 3, 260
+    local Coins = { Common = 20, Uncommon = 40, Rare = 100, Epic = 200, Legendary = 750 }
+    local Colors = {
+        Common = Color3.fromRGB(180, 180, 180),
+        Uncommon = Color3.fromRGB(80, 200, 120),
+        Rare = Color3.fromRGB(80, 150, 255),
+        Epic = Color3.fromRGB(185, 100, 255),
+        Legendary = Color3.fromRGB(255, 177, 65),
+        Hidden = Color3.fromRGB(255, 80, 100),
+    }
+
+    local CustomEnabled, NotificationId = false, 0
+    local OldGui, OldMain, OldGuiEnabled, OldMainDisabled
+    local ProtectionConnections = {}
+    local GuiAddedConnection, RewardConnection
+
+    local function Disconnect(Connection)
+        if Connection then Connection:Disconnect() end
+    end
+
+    local function ClearProtection()
+        for _, Connection in ipairs(ProtectionConnections) do
+            Disconnect(Connection)
+        end
+        table.clear(ProtectionConnections)
+    end
+
+    local function FindMain(Gui)
+        local Frame1 = Gui:FindFirstChild("Frame")
+        local Frame2 = Frame1 and Frame1:FindFirstChild("Frame")
+        local Main = Frame2 and Frame2:FindFirstChild("Main")
+        return Main and Main:IsA("LocalScript") and Main or nil
+    end
+
+    local function ProtectMain(Main)
+        if not Main or not Main:IsA("LocalScript") then return end
+        if OldMain == Main then
+            Main.Disabled = true
+            return
+        end
+
+        OldMain, OldMainDisabled = Main, Main.Disabled
+        table.insert(ProtectionConnections, Main:GetPropertyChangedSignal("Disabled"):Connect(function()
+            if CustomEnabled and not Main.Disabled then Main.Disabled = true end
+        end))
+        Main.Disabled = true
+    end
+
+    local function ProtectOldGui(Gui)
+        if not CustomEnabled or not Gui then return end
+
+        if OldGui ~= Gui then
+            ClearProtection()
+            OldGui, OldGuiEnabled = Gui, Gui.Enabled
+            OldMain, OldMainDisabled = nil, nil
+
+            table.insert(ProtectionConnections, Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+                if CustomEnabled and Gui.Enabled then Gui.Enabled = false end
+            end))
+
+            table.insert(ProtectionConnections, Gui.DescendantAdded:Connect(function(Object)
+                if not CustomEnabled or Object.Name ~= "Main" or not Object:IsA("LocalScript") then return end
+                task.defer(function()
+                    if CustomEnabled and Object.Parent then
+                        local FoundMain = FindMain(Gui)
+                        if FoundMain then ProtectMain(FoundMain) end
+                    end
+                end)
+            end))
+        end
+
+        local Main = FindMain(Gui)
+        if Main then ProtectMain(Main) end
+        if OldMain then OldMain.Disabled = true end
+        Gui.Enabled = false
+    end
+
+    local PreviousGui = PlayerGui:FindFirstChild("StochasticNotificationGUI")
+    if PreviousGui then PreviousGui:Destroy() end
+
+    local Gui = Instance.new("ScreenGui")
+    Gui.Name = "StochasticNotificationGUI"
+    Gui.ResetOnSpawn = false
+    Gui.IgnoreGuiInset = true
+    Gui.DisplayOrder = 999999
+    Gui.Enabled = false
+    Gui.Parent = PlayerGui
+
+    local Frame = Instance.new("Frame")
+    Frame.Name = "Notification"
+    Frame.Size = UDim2.fromOffset(NOTIFICATION_WIDTH, 82)
+    Frame.Position = UDim2.new(1, -15, 0.5, 0)
+    Frame.AnchorPoint = Vector2.new(1, 0.5)
+    Frame.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
+    Frame.BorderSizePixel = 0
+    Frame.Visible = false
+    Frame.Parent = Gui
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Thickness = 1
+    Stroke.Color = Color3.fromRGB(80, 200, 120)
+    Stroke.Transparency = 0.2
+    Stroke.Parent = Frame
+
+    local Accent = Instance.new("Frame")
+    Accent.Size = UDim2.new(0, 3, 1, -16)
+    Accent.Position = UDim2.fromOffset(6, 8)
+    Accent.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+    Accent.BorderSizePixel = 0
+    Accent.Parent = Frame
+    Instance.new("UICorner", Accent).CornerRadius = UDim.new(1, 0)
+
+    local Header = Instance.new("TextLabel")
+    Header.Position = UDim2.fromOffset(16, 7)
+    Header.Size = UDim2.new(1, -25, 0, 17)
+    Header.BackgroundTransparency = 1
+    Header.Font = Enum.Font.GothamSemibold
+    Header.TextSize = 11
+    Header.TextColor3 = Color3.fromRGB(155, 165, 175)
+    Header.TextXAlignment = Enum.TextXAlignment.Left
+    Header.Parent = Frame
+
+    local ItemName = Instance.new("TextLabel")
+    ItemName.Position = UDim2.fromOffset(16, 27)
+    ItemName.Size = UDim2.new(1, -25, 0, 23)
+    ItemName.BackgroundTransparency = 1
+    ItemName.Font = Enum.Font.GothamBold
+    ItemName.TextSize = 15
+    ItemName.TextColor3 = Color3.fromRGB(240, 240, 245)
+    ItemName.TextXAlignment = Enum.TextXAlignment.Left
+    ItemName.TextTruncate = Enum.TextTruncate.AtEnd
+    ItemName.Parent = Frame
+
+    local Details = Instance.new("TextLabel")
+    Details.Position = UDim2.fromOffset(16, 54)
+    Details.Size = UDim2.new(1, -25, 0, 17)
+    Details.BackgroundTransparency = 1
+    Details.Font = Enum.Font.Gotham
+    Details.TextSize = 11
+    Details.TextColor3 = Color3.fromRGB(180, 185, 195)
+    Details.TextXAlignment = Enum.TextXAlignment.Left
+    Details.TextTruncate = Enum.TextTruncate.AtEnd
+    Details.Parent = Frame
+
+    local function Notify(Name, IsDuplicate)
+        if not CustomEnabled then return end
+
+        Name = tostring(Name or "Unknown")
+        local Component = Components:FindFirstChild(Name)
+        local Rarity = (Component and Component:GetAttribute("Rarity")) or "Common"
+        local Color = Colors[Rarity] or Colors.Common
+
+        Header.Text = IsDuplicate == true and "DUPLICATE" or "COMPONENT OBTAINED"
+        ItemName.Text, ItemName.TextColor3 = Name, Color
+        Accent.BackgroundColor3, Stroke.Color = Color, Color
+
+        if IsDuplicate == true then
+            local Amount = Coins[Rarity]
+            Details.Text = Amount and ("Converted to " .. Amount .. " Canny Coins") or "Duplicate component"
+        else
+            Details.Text = "Rarity: " .. tostring(Rarity)
+        end
+
+        NotificationId += 1
+        local CurrentId = NotificationId
+        Frame.Visible = true
+
+        task.delay(NOTIFICATION_TIME, function()
+            if NotificationId == CurrentId and Frame.Parent then Frame.Visible = false end
+        end)
+    end
+
+	local function RestoreOriginalGui()
+	    local Main, OriginalGui = OldMain, OldGui
+
+	    if Main and Main.Parent then
+	        local RootFrame = Main.Parent
+
+	        while RootFrame.Parent and RootFrame.Parent:IsA("GuiObject") do
+	            RootFrame = RootFrame.Parent
 	        end
-	    end)
+
+	        if RootFrame:IsA("GuiObject") then
+	            local Position = RootFrame.Position
+	            RootFrame.Position = UDim2.new(Position.X.Scale, Position.X.Offset, -10000, 0)
+	        end
+
+	        Main.Disabled = OldMainDisabled
+	    end
+
+	    if OriginalGui and OriginalGui.Parent then
+	        OriginalGui.Enabled = OldGuiEnabled
+	    end
+
+	    OldMain, OldGui = nil, nil
+	    OldMainDisabled, OldGuiEnabled = nil, nil
 	end
 
-	local function CustomMenu(State)
-	    CustomEnabled = State == true
-	
-	    if CustomEnabled then
-	        Gui.Enabled = true
-	
-	        local OriginalGui = PlayerGui:FindFirstChild(
-	            "StochasticRemunerationGUI"
-	        )
-	
-	        if OriginalGui then
-	            ProtectOldGui(OriginalGui)
-	        end
-	
-	        Disconnect(GuiAddedConnection)
-	
-	        GuiAddedConnection = PlayerGui.ChildAdded:Connect(function(Child)
-	            if not CustomEnabled then
-	                return
-	            end
-	
-	            if Child.Name == "StochasticRemunerationGUI" then
-	                task.defer(function()
-	                    if CustomEnabled and Child.Parent == PlayerGui then
-	                        ProtectOldGui(Child)
-	                    end
-	                end)
-	            end
-	        end)
-	
-	        if not RewardConnection then
-	            RewardConnection = RewardEvent.OnClientEvent:Connect(
-	                function(Name, IsDuplicate)
-	                    Notify(Name, IsDuplicate)
-	                end
-	            )
-	        end
-	    else
-	        NotificationId += 1
-	        Frame.Visible = false
-	        Gui.Enabled = false
-	
-	        Disconnect(RewardConnection)
-	        Disconnect(GuiAddedConnection)
-	        RewardConnection = nil
-	        GuiAddedConnection = nil
-	
-	        ClearProtection()
-	
-	        if OldMain and OldMain.Parent then
-	            OldMain.Disabled = OldMainDisabled
-	        end
-	
-	        if OldGui and OldGui.Parent then
-	            OldGui.Enabled = OldGuiEnabled
-	        end
-	
-	        OldMain = nil
-	        OldGui = nil
-	        OldMainDisabled = nil
-	        OldGuiEnabled = nil
-	    end
-	end
-	
-	local Environment = _G
-	
-	if type(getgenv) == "function" then
-	    local Success, Result = pcall(getgenv)
-	
-	    if Success and type(Result) == "table" then
-	        Environment = Result
-	    end
-	end
-	
-	Environment.CustomMenu = CustomMenu
+    local function CustomMenu(State)
+        CustomEnabled = State == true
 
-	toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(state)
-		CustomMenu(state)
+        if CustomEnabled then
+            Gui.Enabled = true
+            local OriginalGui = PlayerGui:FindFirstChild("StochasticRemunerationGUI")
+            if OriginalGui then ProtectOldGui(OriginalGui) end
+
+            Disconnect(GuiAddedConnection)
+            GuiAddedConnection = PlayerGui.ChildAdded:Connect(function(Child)
+                if not CustomEnabled or Child.Name ~= "StochasticRemunerationGUI" then return end
+                task.defer(function()
+                    if CustomEnabled and Child.Parent == PlayerGui then ProtectOldGui(Child) end
+                end)
+            end)
+
+            if not RewardConnection then
+                RewardConnection = RewardEvent.OnClientEvent:Connect(Notify)
+            end
+        else
+            NotificationId += 1
+            Frame.Visible, Gui.Enabled = false, false
+
+            Disconnect(RewardConnection)
+            Disconnect(GuiAddedConnection)
+            RewardConnection, GuiAddedConnection = nil, nil
+            ClearProtection()
+            RestoreOriginalGui()
+        end
+    end
+
+    local Environment = _G
+    if type(getgenv) == "function" then
+        local Success, Result = pcall(getgenv)
+        if Success and type(Result) == "table" then Environment = Result end
+    end
+    Environment.CustomMenu = CustomMenu
+
+    toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(State) 
+		CustomMenu(State) 
 	end)
 end
 
-local Tab = Window:NewTab("give")
+
+local Tab = Window:NewTab("Give")
 
 local Section = Tab:NewSection("by CUCUMBER")
+
 do 
 	local watgiwe = nil
 	
@@ -613,6 +574,16 @@ do
 		end
 	end)
 end
+
+Section:NewButton("give Zip 22", "Подсказка", function()
+	if getcoins() >= 180 then
+		game:GetService("ReplicatedStorage").Remotes.BuyGun:FireServer(
+		    "Zip 22"
+		)
+	else
+		SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS", 5, 119528748990662)
+	end	
+end)
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
 
