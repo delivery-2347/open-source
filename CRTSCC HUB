@@ -1,3 +1,135 @@
+local ENEIBLE = true
+
+-- pelmen
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local HRP = character:WaitForChild("HumanoidRootPart")
+-- ReplicatedStorage
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local FireCD = ReplicatedStorage.Remotes.FireCD
+-- 67
+local CoreGui = game:GetService("CoreGui")
+
+local PopupGui
+local PopupImage
+local PopupVersion = 0
+
+function ShowImage(ImageId, Duration)
+    if not ImageId or tostring(ImageId) == "" then return end
+    Duration = tonumber(Duration) or 5
+    Duration = math.max(0, Duration)
+
+    PopupVersion += 1
+    local Version = PopupVersion
+
+    if not PopupGui or not PopupGui.Parent then
+        PopupGui = Instance.new("ScreenGui")
+        PopupGui.Name = "CucumberImagePopup"
+        PopupGui.IgnoreGuiInset = true
+        PopupGui.ResetOnSpawn = false
+        PopupGui.DisplayOrder = 999999
+
+        local Frame = Instance.new("Frame")
+        Frame.Name = "ImageFrame"
+        Frame.Size = UDim2.fromOffset(94, 94)
+        Frame.Position = UDim2.new(1, -16, 0, 16)
+        Frame.AnchorPoint = Vector2.new(1, 0)
+        Frame.BackgroundColor3 = Color3.fromRGB(10, 14, 12)
+        Frame.BackgroundTransparency = 0.1
+        Frame.BorderSizePixel = 0
+        Frame.Parent = PopupGui
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(45, 200, 100)
+        Stroke.Thickness = 2
+        Stroke.Parent = Frame
+
+        PopupImage = Instance.new("ImageLabel")
+        PopupImage.Name = "Image"
+        PopupImage.Position = UDim2.fromOffset(3, 3)
+        PopupImage.Size = UDim2.new(1, -6, 1, -6)
+        PopupImage.BackgroundTransparency = 1
+        PopupImage.BorderSizePixel = 0
+        PopupImage.ScaleType = Enum.ScaleType.Fit
+        PopupImage.Parent = Frame
+
+        local Success = pcall(function()
+            if typeof(gethui) == "function" then
+                PopupGui.Parent = gethui()
+            else
+                PopupGui.Parent = CoreGui
+            end
+        end)
+
+        if not Success then
+            local PlayerGui = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
+
+            if PlayerGui then
+                PopupGui.Parent = PlayerGui
+            else
+                PopupGui:Destroy()
+                PopupGui = nil
+                PopupImage = nil
+                return
+            end
+        end
+    end
+
+    PopupImage.Image = tostring(ImageId)
+    PopupGui.Enabled = true
+
+    task.delay(Duration, function()
+        if PopupVersion == Version and PopupGui then
+            PopupGui:Destroy()
+            PopupGui = nil
+            PopupImage = nil
+        end
+    end)
+end
+
+function NormalizeIcon(iconId)
+    if iconId == nil or tostring(iconId) == "" then return nil end
+    local icon = tostring(iconId):match("^%s*(.-)%s*$")
+    if icon:match("^rbxthumb://") then return icon end
+    local id = icon:match("^rbxassetid://(%d+)$") or icon:match("^assetid://(%d+)$") or icon:match("^[%s]*(%d+)[%s]*$") or icon:match("[?&]id=(%d+)")
+    if not id then return icon end
+    if icon:match("^rbxassetid://") or icon:match("^assetid://") then return "rbxassetid://" .. id end
+    return "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150"
+end
+
+function SISTEM_uvidomleniya(title, content, duration, iconId, button1, button2, callback)
+    local notification = {
+        Title = title,
+        Text = content,
+        Duration = duration,
+        Icon = NormalizeIcon(iconId)
+    }
+    if button1 or button2 then
+        local Bindable = Instance.new("BindableFunction")
+
+        Bindable.OnInvoke = function(button)
+            if callback then
+                callback(button)
+            end
+        end
+        notification.Button1 = button1
+        notification.Button2 = button2
+        notification.Callback = Bindable
+    end
+    game:GetService("StarterGui"):SetCore("SendNotification", notification)
+end
+
+task.spawn(function() SISTEM_uvidomleniya("download assist", "67", 0, 101789279594734) ;SISTEM_uvidomleniya("download assist", "67", 0, 113093122) ;SISTEM_uvidomleniya("download assist", "67", 0, 93390660159546) end)
+-- togle 
+local toggl_Blueprints_Auto_farming
+local toggl_custom_Stochastic_Blueprint_Remuneration
+localPlayer.CharacterAdded:Connect(function(char)
+    character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+    HRP = character:WaitForChild("HumanoidRootPart")
+end)
+
 local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
 
 local CUCUMBER = {
@@ -8,14 +140,31 @@ local CUCUMBER = {
     ElementColor = Color3.fromRGB(18, 55, 38)
 }
 
-local Window = Kavo.CreateLib("🥒 CRTSCC HUB 🥒", CUCUMBER)
+local Window = Kavo.CreateLib("CRTSCC HUB", CUCUMBER)
 
 local Tab = Window:NewTab("menu")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
-Section:NewButton("opening a door: first method", "Подсказка", function()
+Section:NewButton("opening a door: Burger King", "Подсказка", function()
+    fireclickdetector(workspace.Islands.BurgerKing["Burger King"]["Code door"].Open.ClickDetector)
+end)
+
+Section:NewButton("opening a door: first method", "Button.ClickDetector", function()
     fireclickdetector(workspace.Islands.BorderCheckpoint.Button.Button.ClickDetector)
+end)
+
+Section:NewButton("opening a door: second method", "door noclip", function()
+	workspace.Islands.BorderCheckpoint.Gate.Door1.CanCollide = false
+	workspace.Islands.BorderCheckpoint.Gate.Door2.CanCollide = false
+	workspace.Islands.BorderCheckpoint.Gate.Door1.Transparency = 0.5
+	workspace.Islands.BorderCheckpoint.Gate.Door2.Transparency = 0.5
+	SISTEM_uvidomleniya("5 seconds—hurry up!", "furry", 4, 70627586472131)
+	task.wait(5)
+	workspace.Islands.BorderCheckpoint.Gate.Door1.CanCollide = true
+	workspace.Islands.BorderCheckpoint.Gate.Door2.CanCollide = true
+	workspace.Islands.BorderCheckpoint.Gate.Door1.Transparency = 0
+	workspace.Islands.BorderCheckpoint.Gate.Door2.Transparency = 0
 end)
 
 local Tab = Window:NewTab("FARM")
@@ -25,38 +174,36 @@ local Section = Tab:NewSection("by CUCUMBER")
 do 
 	local conekr
 
-	Section:NewToggle("Blueprints : Auto-farming", "Blueprints Auto-farming", function(state)
+	local spawn = workspace.BlueprintSpawn
+
+	local function Fire_TouchTransmitter(part)
+	    local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+	    if not hrp or not part or not part.Parent then
+	        return
+	    end
+
+	    firetouchinterest(hrp, part.Parent, 0)
+	    task.wait()
+	    firetouchinterest(hrp, part.Parent, 1)
+	end
+
+	local function Blueprints(obj)
+	    if obj.Name ~= "Blueprints" then
+	        return
+	    end
+
+	    local character = localPlayer.Character
+	    local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+	    if not hrp then
+	        return
+	    end
+
+	    Fire_TouchTransmitter(obj:FindFirstChild("TouchInterest"))
+	end
+	toggl_Blueprints_Auto_farming = Section:NewToggle("Blueprints : Auto-farming", "Blueprints Auto-farming", function(state)
 	    if state then
-	        local spawn = workspace.BlueprintSpawn
-	        local player = game.Players.LocalPlayer
-
-	        local function Fire_TouchTransmitter(part)
-	            local plr = game:GetService("Players").LocalPlayer
-	            local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-
-	            if not hrp or not part or not part.Parent then
-	                return
-	            end
-
-	            firetouchinterest(hrp, part.Parent, 0)
-	            task.wait()
-	            firetouchinterest(hrp, part.Parent, 1)
-	        end
-
-	        local function Blueprints(obj)
-	            if obj.Name ~= "Blueprints" then
-	                return
-	            end
-
-	            local character = player.Character
-	            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-
-	            if not hrp then
-	                return
-	            end
-
-	            Fire_TouchTransmitter(obj:FindFirstChild("TouchInterest"))
-	        end
 
 	        for _, obj in ipairs(spawn:GetDescendants()) do
 	            Blueprints(obj)
@@ -70,6 +217,11 @@ do
 	        end
 	    end
 	end)
+	Section:NewButton("opening a door: first method", "Подсказка", function()
+		for _, obj in ipairs(spawn:GetDescendants()) do
+		    Blueprints(obj)
+		end
+	end)
 end
 
 do
@@ -77,26 +229,444 @@ do
 	    workspace.Islands.CartDepot.CartDepotDecor,
 	    workspace.LooseItems,
 	    workspace.Carts,
-		workspace.Islands.CartDepot.CartDepotDecor
+		workspace.Islands.Scrapyard.Decor,
+		workspace.Islands.Scrapyard.SpawnableParts
 	}
 
 	Section:NewKeybind("Salvage Object : instant", "Подсказка", Enum.KeyCode.RightShift, function()
+		if not ENEIBLE then return end
 		for _, folder in ipairs(folders) do
 		    for _, obj in ipairs(folder:GetChildren()) do
 		        pcall(function()
-		            game:GetService("ReplicatedStorage").Remotes.MouseLocationTransciever:FireServer(obj)
+		            ReplicatedStorage.Remotes.MouseLocationTransciever:FireServer(obj)
 		        end)
 		    end
 		end
 	end)
 end
 
+do
+	local PlayerGui = localPlayer:WaitForChild("PlayerGui")
+	local Components = ReplicatedStorage:WaitForChild("Components")
+	local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+	local RewardEvent = Remotes:WaitForChild("Remuneration")
+	
+	local NOTIFICATION_TIME = 3
+	local NOTIFICATION_WIDTH = 260
+	
+	local Coins = {
+	    Common = 20,
+	    Uncommon = 40,
+	    Rare = 100,
+	    Epic = 200,
+	    Legendary = 750,
+	}
+	
+	local Colors = {
+	    Common = Color3.fromRGB(180, 180, 180),
+	    Uncommon = Color3.fromRGB(80, 200, 120),
+	    Rare = Color3.fromRGB(80, 150, 255),
+	    Epic = Color3.fromRGB(185, 100, 255),
+	    Legendary = Color3.fromRGB(255, 177, 65),
+	    Hidden = Color3.fromRGB(255, 80, 100),
+	}
+	
+	local CustomEnabled = false
+	local NotificationId = 0
+	
+	local OldGui
+	local OldMain
+	local OldGuiEnabled
+	local OldMainDisabled
+	
+	local ProtectionConnections = {}
+	local GuiAddedConnection
+	local RewardConnection
+	
+	local function Disconnect(Connection)
+	    if Connection then
+	        Connection:Disconnect()
+	    end
+	end
+	
+	local function ClearProtection()
+	    for _, Connection in ipairs(ProtectionConnections) do
+	        Disconnect(Connection)
+	    end
+	
+	    table.clear(ProtectionConnections)
+	end
+	
+	local function FindMain(Gui)
+	    local Frame1 = Gui:FindFirstChild("Frame")
+	    local Frame2 = Frame1 and Frame1:FindFirstChild("Frame")
+	    local Main = Frame2 and Frame2:FindFirstChild("Main")
+	
+	    if Main and Main:IsA("LocalScript") then
+	        return Main
+	    end
+	
+	    return nil
+	end
+	
+	local function ProtectMain(Main)
+	    if not Main or not Main:IsA("LocalScript") then
+	        return
+	    end
+	
+	    if OldMain == Main then
+	        Main.Disabled = true
+	        return
+	    end
+	
+	    OldMain = Main
+	    OldMainDisabled = Main.Disabled
+	
+	    table.insert(
+	        ProtectionConnections,
+	        Main:GetPropertyChangedSignal("Disabled"):Connect(function()
+	            if CustomEnabled and not Main.Disabled then
+	                Main.Disabled = true
+	            end
+	        end)
+	    )
+	
+	    Main.Disabled = true
+	end
+	
+	local function ProtectOldGui(Gui)
+	    if not CustomEnabled or not Gui then
+	        return
+	    end
+	
+	    if OldGui ~= Gui then
+	        ClearProtection()
+	
+	        OldGui = Gui
+	        OldGuiEnabled = Gui.Enabled
+	        OldMain = nil
+	        OldMainDisabled = nil
+	
+	        table.insert(
+	            ProtectionConnections,
+	            Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+	                if CustomEnabled and Gui.Enabled then
+	                    Gui.Enabled = false
+	                end
+	            end)
+	        )
+	
+	        table.insert(
+	            ProtectionConnections,
+	            Gui.DescendantAdded:Connect(function(Object)
+	                if CustomEnabled
+	                    and Object.Name == "Main"
+	                    and Object:IsA("LocalScript") then
+	
+	                    task.defer(function()
+	                        if CustomEnabled and Object.Parent then
+	                            local FoundMain = FindMain(Gui)
+	
+	                            if FoundMain then
+	                                ProtectMain(FoundMain)
+	                            end
+	                        end
+	                    end)
+	                end
+	            end)
+	        )
+	    end
+	
+	    local Main = FindMain(Gui)
+	
+	    if Main then
+	        ProtectMain(Main)
+	    end
+	
+	    if OldMain then
+	        OldMain.Disabled = true
+	    end
+	
+	    Gui.Enabled = false
+	end
+	
+	local PreviousGui = PlayerGui:FindFirstChild("StochasticNotificationGUI")
+	
+	if PreviousGui then
+	    PreviousGui:Destroy()
+	end
+	
+	local Gui = Instance.new("ScreenGui")
+	Gui.Name = "StochasticNotificationGUI"
+	Gui.ResetOnSpawn = false
+	Gui.IgnoreGuiInset = true
+	Gui.DisplayOrder = 999999
+	Gui.Enabled = false
+	Gui.Parent = PlayerGui
+	
+	local Frame = Instance.new("Frame")
+	Frame.Name = "Notification"
+	Frame.Size = UDim2.fromOffset(NOTIFICATION_WIDTH, 82)
+	Frame.Position = UDim2.new(1, -15, 0.5, 0)
+	Frame.AnchorPoint = Vector2.new(1, 0.5)
+	Frame.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
+	Frame.BorderSizePixel = 0
+	Frame.Visible = false
+	Frame.Parent = Gui
+	
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+	
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Thickness = 1
+	Stroke.Color = Color3.fromRGB(80, 200, 120)
+	Stroke.Transparency = 0.2
+	Stroke.Parent = Frame
+	
+	local Accent = Instance.new("Frame")
+	Accent.Size = UDim2.new(0, 3, 1, -16)
+	Accent.Position = UDim2.fromOffset(6, 8)
+	Accent.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+	Accent.BorderSizePixel = 0
+	Accent.Parent = Frame
+	
+	Instance.new("UICorner", Accent).CornerRadius = UDim.new(1, 0)
+	
+	local Header = Instance.new("TextLabel")
+	Header.Position = UDim2.fromOffset(16, 7)
+	Header.Size = UDim2.new(1, -25, 0, 17)
+	Header.BackgroundTransparency = 1
+	Header.Font = Enum.Font.GothamSemibold
+	Header.TextSize = 11
+	Header.TextColor3 = Color3.fromRGB(155, 165, 175)
+	Header.TextXAlignment = Enum.TextXAlignment.Left
+	Header.Parent = Frame
+	
+	local ItemName = Instance.new("TextLabel")
+	ItemName.Position = UDim2.fromOffset(16, 27)
+	ItemName.Size = UDim2.new(1, -25, 0, 23)
+	ItemName.BackgroundTransparency = 1
+	ItemName.Font = Enum.Font.GothamBold
+	ItemName.TextSize = 15
+	ItemName.TextColor3 = Color3.fromRGB(240, 240, 245)
+	ItemName.TextXAlignment = Enum.TextXAlignment.Left
+	ItemName.TextTruncate = Enum.TextTruncate.AtEnd
+	ItemName.Parent = Frame
+	
+	local Details = Instance.new("TextLabel")
+	Details.Position = UDim2.fromOffset(16, 54)
+	Details.Size = UDim2.new(1, -25, 0, 17)
+	Details.BackgroundTransparency = 1
+	Details.Font = Enum.Font.Gotham
+	Details.TextSize = 11
+	Details.TextColor3 = Color3.fromRGB(180, 185, 195)
+	Details.TextXAlignment = Enum.TextXAlignment.Left
+	Details.TextTruncate = Enum.TextTruncate.AtEnd
+	Details.Parent = Frame
+	
+	local function Notify(Name, IsDuplicate)
+	    if not CustomEnabled then
+	        return
+	    end
+	
+	    Name = tostring(Name or "Unknown")
+	
+	    local Component = Components:FindFirstChild(Name)
+	    local Rarity = Component and Component:GetAttribute("Rarity")
+	    Rarity = Rarity or "Common"
+	
+	    local Color = Colors[Rarity] or Colors.Common
+	
+	    Header.Text = IsDuplicate == true
+	        and "DUPLICATE"
+	        or "COMPONENT OBTAINED"
+	
+	    ItemName.Text = Name
+	    ItemName.TextColor3 = Color
+	
+	    Accent.BackgroundColor3 = Color
+	    Stroke.Color = Color
+	
+	    if IsDuplicate == true then
+	        local Amount = Coins[Rarity]
+	
+	        Details.Text = Amount
+	            and ("Converted to " .. Amount .. " Canny Coins")
+	            or "Duplicate component"
+	    else
+	        Details.Text = "Rarity: " .. tostring(Rarity)
+	    end
+	
+	    NotificationId += 1
+	    local CurrentId = NotificationId
+	
+	    Frame.Visible = true
+	
+	    task.delay(NOTIFICATION_TIME, function()
+	        if NotificationId == CurrentId and Frame.Parent then
+	            Frame.Visible = false
+	        end
+	    end)
+	end
+
+	local function CustomMenu(State)
+	    CustomEnabled = State == true
+	
+	    if CustomEnabled then
+	        Gui.Enabled = true
+	
+	        local OriginalGui = PlayerGui:FindFirstChild(
+	            "StochasticRemunerationGUI"
+	        )
+	
+	        if OriginalGui then
+	            ProtectOldGui(OriginalGui)
+	        end
+	
+	        Disconnect(GuiAddedConnection)
+	
+	        GuiAddedConnection = PlayerGui.ChildAdded:Connect(function(Child)
+	            if not CustomEnabled then
+	                return
+	            end
+	
+	            if Child.Name == "StochasticRemunerationGUI" then
+	                task.defer(function()
+	                    if CustomEnabled and Child.Parent == PlayerGui then
+	                        ProtectOldGui(Child)
+	                    end
+	                end)
+	            end
+	        end)
+	
+	        if not RewardConnection then
+	            RewardConnection = RewardEvent.OnClientEvent:Connect(
+	                function(Name, IsDuplicate)
+	                    Notify(Name, IsDuplicate)
+	                end
+	            )
+	        end
+	    else
+	        NotificationId += 1
+	        Frame.Visible = false
+	        Gui.Enabled = false
+	
+	        Disconnect(RewardConnection)
+	        Disconnect(GuiAddedConnection)
+	        RewardConnection = nil
+	        GuiAddedConnection = nil
+	
+	        ClearProtection()
+	
+	        if OldMain and OldMain.Parent then
+	            OldMain.Disabled = OldMainDisabled
+	        end
+	
+	        if OldGui and OldGui.Parent then
+	            OldGui.Enabled = OldGuiEnabled
+	        end
+	
+	        OldMain = nil
+	        OldGui = nil
+	        OldMainDisabled = nil
+	        OldGuiEnabled = nil
+	    end
+	end
+	
+	local Environment = _G
+	
+	if type(getgenv) == "function" then
+	    local Success, Result = pcall(getgenv)
+	
+	    if Success and type(Result) == "table" then
+	        Environment = Result
+	    end
+	end
+	
+	Environment.CustomMenu = CustomMenu
+
+	toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(state)
+		CustomMenu(state)
+	end)
+end
+
 local Tab = Window:NewTab("give")
 
 local Section = Tab:NewSection("by CUCUMBER")
+do 
+	local watgiwe = nil
+	
+	Section:NewButton("give Flamethrower", "Подсказка", function()
+		watgiwe = workspace.Islands.CartDepot["The Cart Depot"]["Flamethrower giver"].ProxPart
+		if watgiwe then
+		    local seifcframe = HRP.CFrame
+		    task.wait(0.1)
+		    HRP.CFrame = watgiwe.CFrame * CFrame.new(0,0,5)
+		    task.wait(0.1)
+			for w = 1,2 do
+				fireproximityprompt(watgiwe.ProximityPrompt)
+				task.wait(0.1)
+			end
+		    task.wait(0)
+		    HRP.CFrame = seifcframe
+		else 
+			SISTEM_uvidomleniya("What selected", "BROO", 5, 113093122)
+		end
+	end)
+end
+
+local Tab = Window:NewTab("ADMIN ARBUZ")
+
+local Section = Tab:NewSection("by CUCUMBER") 
+
+Section:NewButton("Black Holes", "Подсказка", function()
+	FireCD:FireServer(
+	    workspace["Black Holes"]["Black Hole"].Activate
+	)
+end)
 
 
+local Tab = Window:NewTab("WHAT??")
+
+local Section = Tab:NewSection("by CUCUMBER") 
+
+Section:NewButton("what is this : Burger King", "Подсказка", function()
+	ShowImage(NormalizeIcon(101789279594734), 3)
+end)
+
+Section:NewButton("what is this : opening a door", "Подсказка", function()
+	ShowImage(NormalizeIcon(93390660159546), 3)
+end)
+
+Section:NewButton("what is this : ", "Подсказка", function()
+
+end)
+
+local Tab = Window:NewTab("seting")
+
+local Section = Tab:NewSection("by CUCUMBER")
 
 Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
     Kavo:ToggleUI()
 end)
+
+do 
+	repeat
+	    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+	        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
+	            local title = gui:FindFirstChild("title", true)
+	            if title and title:IsA("TextLabel") and title.Text:find("CRTSCC HUB", 1, true) then
+	                ril_nem = gui
+	                break
+	            end
+	        end
+	    end
+	    task.wait(0.05)
+	until ril_nem
+
+	ril_nem.Destroying:Connect(function()
+	    ENEIBLE = false
+		toggl_Blueprints_Auto_farming:UpdateToggle(" ", false)
+		toggl_custom_Stochastic_Blueprint_Remuneration:UpdateToggle(" ", false)
+		print("da blina 😭😭😭😭😭😭")
+	end)
+end
