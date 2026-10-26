@@ -600,50 +600,40 @@ do
 	local cart = 67
 	local karr = 67
 
-	local function GetPartUnderPlayer()
-	    local char = game.Players.LocalPlayer.Character
-	    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	    if not hrp then return nil end
-
-	    local params = RaycastParams.new()
-	    params.FilterType = Enum.RaycastFilterType.Exclude
-	    params.FilterDescendantsInstances = {char}
-
-	    local result = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), params)
-	    return result and result.Instance
-	end
-
 	local function getcart()
-	    local cartall = GetPartUnderPlayer()
+	    local cartall = Humanoid.SeatPart
 	    local cart = cartall and cartall.Parent.Parent.Parent
 
-	    if cart and cart.Name == "BasicCart" then
-	        carotoot:UpdateLabel(cart.Name .. " da")
-	        return cart
-	    else
-	        carotoot:UpdateLabel(cart.Name .. " eto ne Seat")
+	    if not Humanoid.Sit then  
+	        carotoot:UpdateLabel("bro sit in cart please")
+	    elseif cart and cart.Name == "BasicCart"  then
+	        carotoot:UpdateLabel(cart.Chasis.Text.SurfaceGui.TextLabel.Text)
+            return cart
 	    end
 	end
 
 	Section:NewButton("Cart: update", "Подсказка", function()
 	    karr = getcart()
+        print(karr)
 	    if not Humanoid.Sit then
 	        carotoot:UpdateLabel("bro sit in cart please")
-	    elseif karr.Name == "BasicCart" then
-	        karr = karr.Controls
+	    elseif getcart() == nil then 
+	        carotoot:UpdateLabel("bro WTF")
+        elseif karr.Name == "BasicCart" then
+            karr = karr.Controls
 	    end 
 	end)
 
-	Section:NewButton("Cart: Down", "Подсказка", function()
-	    FireCD:FireServer(karr.Down.ClickDetector.Clicked)
+	Section:NewButton("Cart: Up", "Подсказка", function()
+	    FireCD:FireServer(karr.Up.ClickDetector.Clicked)
 	end)
 
 	Section:NewButton("Cart: On/Off", "Подсказка", function()
 	    FireCD:FireServer(karr.On.ClickDetector.Clicked)
 	end)
 
-	Section:NewButton("Cart: Up", "Подсказка", function()
-	    FireCD:FireServer(karr.Up.ClickDetector.Clicked)
+	Section:NewButton("Cart: Down", "Подсказка", function()
+	    FireCD:FireServer(karr.Down.ClickDetector.Clicked)
 	end)
 end
 
