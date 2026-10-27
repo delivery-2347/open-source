@@ -5,11 +5,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 ```
 
 <img width="528" height="322" alt="image" src="https://github.com/user-attachments/assets/17b3e867-4c84-4c7d-95da-e2d05ed2e0d0" />
-```
 
 [^^^CRTSCC^^^](https://www.roblox.com/games/14028946967/Cart-Ride-to-Save-Canny-Cat)
-
-```
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/CUCUMBER%20Translate"))() -- eso dorobotati nado 
@@ -23,9 +20,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="399" height="122" alt="image" src="https://github.com/user-attachments/assets/55d8accd-223f-436b-8e46-8c46ea799303" />
 
-```
 [^^^FTAP^^^](https://www.roblox.com/games/6961824067/Fling-Things-and-People)
-```
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/FPV%20in%20FTAP"))()
@@ -33,9 +28,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="522" height="317" alt="FPV in FTAP" src="https://github.com/user-attachments/assets/6a7afba8-33d1-45c0-8822-bf5efff50067" />
 
-```
 [^^^FTAP^^^](https://www.roblox.com/games/6961824067/Fling-Things-and-People)
-```
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/moonwalk"))()
@@ -49,9 +42,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="520" height="322" alt="evade" src="https://github.com/user-attachments/assets/2e06870d-0090-479c-8e3b-cbb1b9f818d3" />
 
-```
 [^^^EVADE^^^](https://www.roblox.com/games/9872472334/Evade)
-```
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/IA%20Crosshair%20all%20game"))()
