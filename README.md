@@ -6,7 +6,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 ```
 
 <img width="528" height="322" alt="image" src="https://github.com/user-attachments/assets/17b3e867-4c84-4c7d-95da-e2d05ed2e0d0" />
-```
+```TXT
 [^^^CRTSCC^^^](https://www.roblox.com/games/14028946967/Cart-Ride-to-Save-Canny-Cat)
 ```
 
