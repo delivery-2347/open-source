@@ -629,13 +629,13 @@ local Tab = Window:NewTab("control cart")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
-local carotoot = Section:NewLabel("log")
+local carotoot = Section:NewLabel("sit in cart")
 
 do
     local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
     local cart = nil
     local cartC = nil
-    local noistansionka = false
+    local distansionka = false
 
     local function allnil()
         cart = nil
@@ -645,7 +645,7 @@ do
     local function getcart()
         if not Humanoid.Sit then return nil end
         local cartall = Humanoid.SeatPart
-
+        
         local karr = cartall and cartall.Parent and cartall.Parent.Parent and cartall.Parent.Parent.Parent
 
         if karr and karr.Name == "BasicCart" then
@@ -655,7 +655,7 @@ do
     end
 
     local function updateCart()
-        if not cart then return end
+        if not cart then return end 
 
         local caton = cartC.On.BrickColor.Name
         local carnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
@@ -674,32 +674,12 @@ do
         )
     end
     
-    toggleall.toggl_Cart_remote_control = Section:NewToggle("Cart : remote control", "remote control Cart", function(state)
-        noistansionka = state
-    end)
-
-    Section:NewButton("Cart: update", "Подсказка", function()
-        if noistansionka then 
-            SISTEM_uvidomleniya("bro", "You have remote control enabled.", 1, "iconId", "off remote control", "Nothing", function(button) 
-                if button == "off remote control" then 
-                    toggleall.toggl_Cart_remote_control:UpdateToggle("Cart : remote control", false)
-                elseif button == "Nothing" then 
-                    
-                end
-            end)
+    toggleall.toggl_Cart_remote_control = Section:NewToggle("Cart: remote control", "remote control Cart", function(state)
+        distansionka = state
+        if distansionka then
+            carotoot:UpdateLabel("Go to the cart and click Update")
         end
-        local newCart = getcart()
-        if not newCart then
-            allnil()
-            carotoot:UpdateLabel(not Humanoid.Sit and "sit in cart" or "bro WTF")
-            return
-        end
-        cart = newCart
-        cartC = cart.Controls
-        updateCart()
     end)
-
-    toggleall.toggl_Cart_remote_control:UpdateToggle("Cart : remote control", false)
 
     Section:NewButton("Cart: Up", "Подсказка", function()
         if cartC then
@@ -719,14 +699,34 @@ do
         end
     end)
 
+    local bind = Section:NewLabel("bind")
+
+    Section:NewKeybind("Cart: Up", "Подсказка", Enum.KeyCode.Up, function()
+        if cartC and ENEIBLE then
+            FireCD:FireServer(cartC.Up.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewKeybind("Cart: On/Off", "Подсказка", Enum.KeyCode.V, function()
+        if cartC and ENEIBLE then
+            FireCD:FireServer(cartC.On.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewKeybind("Cart: Down", "Подсказка", Enum.KeyCode.Down, function()
+        if cartC and ENEIBLE then
+            FireCD:FireServer(cartC.Down.ClickDetector.Clicked)
+        end
+    end)
+
     task.spawn(function()
         while ENEIBLE do
             task.wait(0.05)
-            if noistansionka then 
+            if not distansionka then 
                 if not Humanoid.Sit then
-                    if cart  then
+                    if cart then
                         allnil()
-                        carotoot:UpdateLabel("bro sit in cart please")
+                        carotoot:UpdateLabel("sit in cart")
                     end
                 else
                     local newCart = getcart()
@@ -736,12 +736,17 @@ do
                             cartC = cart.Controls
                         end
                         updateCart()
-                    elseif cart  then
+                    elseif cart then
                         allnil()
                         carotoot:UpdateLabel("bro WTF")
                     end
                 end
-            else 
+            else
+                local newCart = getcart()
+                if newCart and cart ~= newCart then
+                    cart = newCart
+                    cartC = cart.Controls
+                end
                 updateCart()
             end
         end
