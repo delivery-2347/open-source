@@ -11,6 +11,7 @@ local HRP = character:WaitForChild("HumanoidRootPart")
 -- ReplicatedStorage
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FireCD = ReplicatedStorage.Remotes.FireCD
+local BuyGun = ReplicatedStorage.Remotes.BuyGun
 -- 67
 local CoreGui = game:GetService("CoreGui")
 
@@ -123,7 +124,20 @@ function SISTEM_uvidomleniya(title, content, duration, iconId, button1, button2,
     game:GetService("StarterGui"):SetCore("SendNotification", notification)
 end
 
-task.spawn(function() SISTEM_uvidomleniya("download assist", "67", 0, 101789279594734) ;SISTEM_uvidomleniya("download assist", "67", 0, 113093122) ;SISTEM_uvidomleniya("download assist", "67", 0, 93390660159546) ;SISTEM_uvidomleniya("download assist", "67", 0, 119528748990662) end)
+do
+    local ids = {
+        101789279594734,
+        113093122,
+        93390660159546,
+        119528748990662,
+    }
+
+    for _, id in ipairs(ids) do
+        task.spawn(function()
+            SISTEM_uvidomleniya("download assist", "67", 0, id)
+        end)
+    end
+end
 
 local function ParseCoins(text)
     text = tostring(text):upper():gsub(",", ""):gsub("%s+", "")
@@ -140,9 +154,19 @@ local function getcoins()
     return ParseCoins(game:GetService("Players").LocalPlayer.PlayerGui.SalvageGUI.Display.Counter.Labels.Points.Counter.Text)
 end
 
+local function HasBadge(id)
+    local success, result = pcall(function()
+        return game:GetService("BadgeService"):UserHasBadgeAsync(
+            game.Players.LocalPlayer.UserId,
+            id
+        )
+    end)
+    return success and result or false
+end
+
 -- togle 
-local toggl_Blueprints_Auto_farming
-local toggl_custom_Stochastic_Blueprint_Remuneration
+local toggleall = {}
+
 localPlayer.CharacterAdded:Connect(function(char)
     character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 	Humanoid = character:WaitForChild("Humanoid")
@@ -221,7 +245,7 @@ do
 
 	    Fire_TouchTransmitter(obj:FindFirstChild("TouchInterest"))
 	end
-	toggl_Blueprints_Auto_farming = Section:NewToggle("Blueprints : Auto-farming", "Blueprints Auto-farming", function(state)
+	toggleall.toggl_Blueprints_Auto_farming = Section:NewToggle("Blueprints : Auto-farming", "Blueprints Auto-farming", function(state)
 	    if state then
 
 	        for _, obj in ipairs(spawn:GetDescendants()) do
@@ -278,6 +302,7 @@ do
             local Handle = Obj:FindFirstChild("Handle")
             return Handle and Handle.Position
         end
+        return nil
     end
 
     local function ScanFolder(Folder, Origin)
@@ -426,7 +451,7 @@ do
     Header.Position = UDim2.fromOffset(16, 7)
     Header.Size = UDim2.new(1, -25, 0, 17)
     Header.BackgroundTransparency = 1
-    Header.Font = Enum.Font.GothamSemibold
+    Header.Font = Enum.Font.GothamMedium
     Header.TextSize = 11
     Header.TextColor3 = Color3.fromRGB(155, 165, 175)
     Header.TextXAlignment = Enum.TextXAlignment.Left
@@ -546,7 +571,7 @@ do
     end
     Environment.CustomMenu = CustomMenu
 
-    toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(State) 
+    toggleall.toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(State) 
 		CustomMenu(State) 
 	end)
 end
@@ -573,19 +598,31 @@ do
 		    task.wait(0)
 		    HRP.CFrame = seifcframe
 		else 
-			SISTEM_uvidomleniya("What selected", "BROO", 5, 113093122)
+			SISTEM_uvidomleniya("What", "BROO", 5, 113093122)
 		end
 	end)
 end
 
 Section:NewButton("give Zip 22", "Подсказка", function()
 	if getcoins() >= 180 then
-		game:GetService("ReplicatedStorage").Remotes.BuyGun:FireServer(
-		    "Zip 22"
-		)
+		BuyGun:FireServer("Zip 22")
 	else
 		SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS", 5, 119528748990662)
 	end	
+end)
+
+if HasBadge(1080576579746942) then
+    Section:NewButton("give Flintlock", "Подсказка", function()
+    	if HasBadge(1080576579746942) then
+    		BuyGun:FireServer("Flintlock")
+    	else
+    		SISTEM_uvidomleniya("Badge required;", "Winner", 5, 119528748990662)
+    	end	
+    end)
+end
+
+Section:NewButton("give PowerLogic MD6707-1900", "Подсказка", function()
+    game:GetService("ReplicatedStorage").Remotes.RequestCompendium:FireServer()  
 end)
 
 local Tab = Window:NewTab("control cart")
@@ -595,46 +632,120 @@ local Section = Tab:NewSection("by CUCUMBER")
 local carotoot = Section:NewLabel("log")
 
 do
-	local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
-	local cartall = 67
-	local cart = 67
-	local karr = 67
+    local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
+    local cart = nil
+    local cartC = nil
+    local noistansionka = false
 
-	local function getcart()
-	    local cartall = Humanoid.SeatPart
-	    local cart = cartall and cartall.Parent.Parent.Parent
+    local function allnil()
+        cart = nil
+        cartC = nil
+    end
 
-	    if not Humanoid.Sit then  
-	        carotoot:UpdateLabel("bro sit in cart please")
-	    elseif cart and cart.Name == "BasicCart"  then
-	        carotoot:UpdateLabel(cart.Chasis.Text.SurfaceGui.TextLabel.Text)
-            return cart
-	    end
-	end
+    local function getcart()
+        if not Humanoid.Sit then return nil end
+        local cartall = Humanoid.SeatPart
 
-	Section:NewButton("Cart: update", "Подсказка", function()
-	    karr = getcart()
-        print(karr)
-	    if not Humanoid.Sit then
-	        carotoot:UpdateLabel("bro sit in cart please")
-	    elseif getcart() == nil then 
-	        carotoot:UpdateLabel("bro WTF")
-        elseif karr.Name == "BasicCart" then
-            karr = karr.Controls
-	    end 
-	end)
+        local karr = cartall and cartall.Parent and cartall.Parent.Parent and cartall.Parent.Parent.Parent
 
-	Section:NewButton("Cart: Up", "Подсказка", function()
-	    FireCD:FireServer(karr.Up.ClickDetector.Clicked)
-	end)
+        if karr and karr.Name == "BasicCart" then
+            return karr
+        end
+        return nil
+    end
 
-	Section:NewButton("Cart: On/Off", "Подсказка", function()
-	    FireCD:FireServer(karr.On.ClickDetector.Clicked)
-	end)
+    local function updateCart()
+        if not cart then return end
 
-	Section:NewButton("Cart: Down", "Подсказка", function()
-	    FireCD:FireServer(karr.Down.ClickDetector.Clicked)
-	end)
+        local caton = cartC.On.BrickColor.Name
+        local carnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
+        local carspeed = cartC.Speed.SurfaceGui.TextLabel.Text
+        local fuel = cartC.Fuel.SurfaceGui.Background
+        local fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
+        local enabling = "on"
+        if caton == "Bright red" then
+            enabling = "off"
+        end
+        carotoot:UpdateLabel(
+            carnum
+            .. " / Speed : " .. carspeed
+            .. " / Fuel : " .. fuelPercent .. "%"
+            .. " / Enabling : " .. enabling
+        )
+    end
+    
+    toggleall.toggl_Cart_remote_control = Section:NewToggle("Cart : remote control", "remote control Cart", function(state)
+        noistansionka = state
+    end)
+
+    Section:NewButton("Cart: update", "Подсказка", function()
+        if noistansionka then 
+            SISTEM_uvidomleniya("bro", "You have remote control enabled.", 1, "iconId", "off remote control", "Nothing", function(button) 
+                if button == "off remote control" then 
+                    toggleall.toggl_Cart_remote_control:UpdateToggle("Cart : remote control", false)
+                elseif button == "Nothing" then 
+                    
+                end
+            end)
+        end
+        local newCart = getcart()
+        if not newCart then
+            allnil()
+            carotoot:UpdateLabel(not Humanoid.Sit and "sit in cart" or "bro WTF")
+            return
+        end
+        cart = newCart
+        cartC = cart.Controls
+        updateCart()
+    end)
+
+    toggleall.toggl_Cart_remote_control:UpdateToggle("Cart : remote control", false)
+
+    Section:NewButton("Cart: Up", "Подсказка", function()
+        if cartC then
+            FireCD:FireServer(cartC.Up.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewButton("Cart: On/Off", "Подсказка", function()
+        if cartC then
+            FireCD:FireServer(cartC.On.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewButton("Cart: Down", "Подсказка", function()
+        if cartC then
+            FireCD:FireServer(cartC.Down.ClickDetector.Clicked)
+        end
+    end)
+
+    task.spawn(function()
+        while ENEIBLE do
+            task.wait(0.05)
+            if noistansionka then 
+                if not Humanoid.Sit then
+                    if cart  then
+                        allnil()
+                        carotoot:UpdateLabel("bro sit in cart please")
+                    end
+                else
+                    local newCart = getcart()
+                    if newCart then
+                        if cart ~= newCart then
+                            cart = newCart
+                            cartC = cart.Controls
+                        end
+                        updateCart()
+                    elseif cart  then
+                        allnil()
+                        carotoot:UpdateLabel("bro WTF")
+                    end
+                end
+            else 
+                updateCart()
+            end
+        end
+    end)
 end
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
@@ -687,8 +798,7 @@ do
 
 	ril_nem.Destroying:Connect(function()
 	    ENEIBLE = false
-		toggl_Blueprints_Auto_farming:UpdateToggle(" ", false)
-		toggl_custom_Stochastic_Blueprint_Remuneration:UpdateToggle(" ", false)
+        for _, toggle in pairs(toggleall) do toggle:UpdateToggle("If you see this message, your GUI is frozen. Reboot it.", false) end
 		print("da blina 😭😭😭😭😭😭")
 	end)
 end
