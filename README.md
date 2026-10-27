@@ -6,7 +6,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="528" height="322" alt="image" src="https://github.com/user-attachments/assets/17b3e867-4c84-4c7d-95da-e2d05ed2e0d0" />
 
-[![CRTSCC](https://static.wikitide.net/cannycatwiki/thumb/f/f8/Game_icon.png/600px-Game_icon.png?_=20241230123543)](https://www.roblox.com/games/14028946967/Cart-Ride-to-Save-Canny-Cat)
+![CRTSCC](https://static.wikitide.net/cannycatwiki/thumb/f/f8/Game_icon.png/600px-Game_icon.png?_=20241230123543)](https://www.roblox.com/games/14028946967/Cart-Ride-to-Save-Canny-Cat)
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/Cucumber%20Sound"))()
