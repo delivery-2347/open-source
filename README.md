@@ -16,7 +16,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="399" height="122" alt="image" src="https://github.com/user-attachments/assets/55d8accd-223f-436b-8e46-8c46ea799303" />
 
-[^^^FTAP^^^](https://www.roblox.com/games/6961824067/Fling-Things-and-People)
+<a href="https://www.roblox.com/games/6961824067/Fling-Things-and-People">
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl4BJolUKtIcsq3Gut_jbGfmxCIZ9h1eyjkdg7HEHWAA&s=10" width="100">
+</a>
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/FPV%20in%20FTAP"))()
@@ -24,7 +26,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 <img width="522" height="317" alt="FPV in FTAP" src="https://github.com/user-attachments/assets/6a7afba8-33d1-45c0-8822-bf5efff50067" />
 
-[^^^FTAP^^^](https://www.roblox.com/games/6961824067/Fling-Things-and-People)
+<a href="https://www.roblox.com/games/6961824067/Fling-Things-and-People">
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl4BJolUKtIcsq3Gut_jbGfmxCIZ9h1eyjkdg7HEHWAA&s=10" width="100">
+</a>
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/evade"))()
