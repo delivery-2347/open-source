@@ -8,6 +8,7 @@ local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local Humanoid = character:WaitForChild("Humanoid")
 local HRP = character:WaitForChild("HumanoidRootPart")
 
+local Mouse = Players.LocalPlayer:GetMouse()
 -- ReplicatedStorage
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FireCD = ReplicatedStorage.Remotes.FireCD
@@ -184,6 +185,12 @@ local CUCUMBER = {
 }
 
 local Window = Kavo.CreateLib("CRTSCC HUB", CUCUMBER)
+
+local Tab = Window:NewTab("Info")
+
+local Section = Tab:NewSection("by CUCUMBER")
+
+
 
 local Tab = Window:NewTab("menu")
 
@@ -581,6 +588,16 @@ local Tab = Window:NewTab("Give")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
+if HasBadge(1080576579746942) then
+    Section:NewButton("give Flintlock", "Подсказка", function()
+    	if HasBadge(1080576579746942) then
+    		BuyGun:FireServer("Flintlock")
+    	else
+    		SISTEM_uvidomleniya("Badge required;", "Winner", 5, 119528748990662)
+    	end	
+    end)
+end
+
 do 
 	local watgiwe = nil
 	
@@ -611,16 +628,6 @@ Section:NewButton("give Zip 22", "Подсказка", function()
 	end	
 end)
 
-if HasBadge(1080576579746942) then
-    Section:NewButton("give Flintlock", "Подсказка", function()
-    	if HasBadge(1080576579746942) then
-    		BuyGun:FireServer("Flintlock")
-    	else
-    		SISTEM_uvidomleniya("Badge required;", "Winner", 5, 119528748990662)
-    	end	
-    end)
-end
-
 Section:NewButton("give PowerLogic MD6707-1900", "Подсказка", function()
     game:GetService("ReplicatedStorage").Remotes.RequestCompendium:FireServer()  
 end)
@@ -636,6 +643,7 @@ do
     local cart = nil
     local cartC = nil
     local distansionka = false
+    local turning_force = 20
 
     local function allnil()
         cart = nil
@@ -643,10 +651,11 @@ do
     end
 
     local function getcart()
-        if not Humanoid.Sit then return nil end
-        local cartall = Humanoid.SeatPart
-        
-        local karr = cartall and cartall.Parent and cartall.Parent.Parent and cartall.Parent.Parent.Parent
+        if not Humanoid or not Humanoid.Parent or not Humanoid.Sit then return nil end
+        local seat = Humanoid.SeatPart
+        local karr = seat and seat.Parent
+            and seat.Parent.Parent
+            and seat.Parent.Parent.Parent
 
         if karr and karr.Name == "BasicCart" then
             return karr
@@ -657,18 +666,18 @@ do
     local function updateCart()
         if not cart then return end 
 
-        local caton = cartC.On.BrickColor.Name
-        local carnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
-        local carspeed = cartC.Speed.SurfaceGui.TextLabel.Text
+        local On = cartC.On.BrickColor.Name
+        local Cartnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
+        local Cartspeed = cartC.Speed.SurfaceGui.TextLabel.Text
         local fuel = cartC.Fuel.SurfaceGui.Background
         local fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
         local enabling = "on"
-        if caton == "Bright red" then
+        if On == "Bright red" then
             enabling = "off"
         end
         carotoot:UpdateLabel(
-            carnum
-            .. " / Speed : " .. carspeed
+            Cartnum
+            .. " / Speed : " .. Cartspeed
             .. " / Fuel : " .. fuelPercent .. "%"
             .. " / Enabling : " .. enabling
         )
@@ -701,22 +710,38 @@ do
 
     local bind = Section:NewLabel("bind")
 
-    Section:NewKeybind("Cart: Up", "Подсказка", Enum.KeyCode.Up, function()
+    Section:NewKeybind("Cart: Up", "Подсказка", Enum.KeyCode.KeypadEight, function()
         if cartC and ENEIBLE then
             FireCD:FireServer(cartC.Up.ClickDetector.Clicked)
         end
     end)
 
-    Section:NewKeybind("Cart: On/Off", "Подсказка", Enum.KeyCode.V, function()
+    Section:NewKeybind("Cart: On/Off", "Подсказка", Enum.KeyCode.KeypadFive, function()
         if cartC and ENEIBLE then
             FireCD:FireServer(cartC.On.ClickDetector.Clicked)
         end
     end)
 
-    Section:NewKeybind("Cart: Down", "Подсказка", Enum.KeyCode.Down, function()
+    Section:NewKeybind("Cart: Down", "Подсказка", Enum.KeyCode.KeypadTwo, function()
         if cartC and ENEIBLE then
             FireCD:FireServer(cartC.Down.ClickDetector.Clicked)
         end
+    end)
+
+    Section:NewKeybind("Cart: left", "Подсказка", Enum.KeyCode.KeypadFour, function()
+        if cartC and ENEIBLE then
+            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,turning_force,0)
+        end
+    end)
+
+    Section:NewKeybind("Cart: right", "Подсказка", Enum.KeyCode.KeypadSix, function()
+        if cartC and ENEIBLE then
+            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,-turning_force,0)
+        end
+    end)
+
+    Section:NewSlider("turning force", "Подсказка", 50, 1, function(value)
+        turning_force = value
     end)
 
     task.spawn(function()
@@ -733,7 +758,7 @@ do
                     if newCart then
                         if cart ~= newCart then
                             cart = newCart
-                            cartC = cart.Controls
+                            cartC = cart:FindFirstChild("Controls")
                         end
                         updateCart()
                     elseif cart then
@@ -745,12 +770,13 @@ do
                 local newCart = getcart()
                 if newCart and cart ~= newCart then
                     cart = newCart
-                    cartC = cart.Controls
+                    cartC = cart:FindFirstChild("Controls")
                 end
                 updateCart()
             end
         end
     end)
+    localPlayer.CharacterAdded:Connect(function() allnil() ;carotoot:UpdateLabel("sit in cart") end)
 end
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
@@ -762,6 +788,72 @@ Section:NewButton("Black Holes", "Подсказка", function()
 	    workspace["Black Holes"]["Black Hole"].Activate
 	)
 end)
+
+do
+    local selectedPlayer
+    local playerOptions = {}
+    local function GetPlayerList()
+        local list = {}
+        table.clear(playerOptions)
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            local name = p.DisplayName .. " (@" .. p.Name .. " | ID: " .. p.UserId .. ")"
+            playerOptions[name] = p
+            table.insert(list, name)
+        end
+
+        table.sort(list)
+        return list
+    end
+
+    local PlayerDropdown = Section:NewDropdown("plr selected", "Выберите игрока", GetPlayerList(), function(selected)
+        selectedPlayer = playerOptions[selected]
+    end)
+
+    Players.PlayerAdded:Connect(function()
+        PlayerDropdown:Refresh(GetPlayerList())
+    end)
+
+    Players.PlayerRemoving:Connect(function(p)
+        if selectedPlayer == p then
+            selectedPlayer = nil
+        end
+
+        PlayerDropdown:Refresh(GetPlayerList())
+    end)
+
+    local lastSelect = 0
+    
+    Section:NewKeybind("Select player", "Наведи мышку и нажми X", Enum.KeyCode.X, function()
+        if os.clock() - lastSelect < 1 then return end
+        lastSelect = os.clock()
+    
+        local target = Mouse.Target
+        local character = target and target:FindFirstAncestorOfClass("Model")
+        local player = character and Players:GetPlayerFromCharacter(character)
+    
+        if player and selectedPlayer ~= player then
+            selectedPlayer = player
+            SISTEM_uvidomleniya("Player", "Selected player: " .. player.Name, 0, Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420))
+        end
+    end)
+
+    Section:NewButton("kill plr", "Подсказка", function()
+        for i = 1, 16 do
+            game:GetService("ReplicatedStorage").Remotes.FireProjectile:FireServer(
+                game:GetService("Players").LocalPlayer.Character["Zip 22"],
+                selectedPlayer.Character.Head,
+                Vector3.new(-148, 5, 405),
+                Enum.Material.Plastic,
+                {
+                    false,
+                    0,
+                    CFrame.new(-100, 11, 356)
+                }
+            )
+        end
+    end)
+end
 
 local Tab = Window:NewTab("WHAT??")
 
