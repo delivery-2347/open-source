@@ -41,6 +41,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 </a>
 
 ```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/HTTP%20SPY.lua"))()
+```
+
+<img width="867" height="231" alt="image" src="https://github.com/user-attachments/assets/d550252b-7798-4680-a132-0829d826321e" />
+
+```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/moonwalk"))()
 ```
 
