@@ -8,6 +8,7 @@ local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local Humanoid = character:WaitForChild("Humanoid")
 local HRP = character:WaitForChild("HumanoidRootPart")
 
+local Backpack = localPlayer.Backpack
 local Mouse = Players.LocalPlayer:GetMouse()
 -- ReplicatedStorage
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -131,6 +132,7 @@ do
         113093122,
         93390660159546,
         119528748990662,
+        28900020,
     }
 
     for _, id in ipairs(ids) do
@@ -165,6 +167,18 @@ local function HasBadge(id)
     return success and result or false
 end
 
+local function BuyItem(name, coin)
+    if name and coin then
+        if getcoins() >= coin then
+        	BuyGun:FireServer(name)
+        else
+        	SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS", 5, 119528748990662)
+        end	
+    elseif name and not coin then
+        BuyGun:FireServer(name)
+    end
+end
+
 -- togle 
 local toggleall = {}
 
@@ -172,6 +186,7 @@ localPlayer.CharacterAdded:Connect(function(char)
     character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 	Humanoid = character:WaitForChild("Humanoid")
     HRP = character:WaitForChild("HumanoidRootPart")
+    Backpack = localPlayer.Backpack
 end)
 
 local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
@@ -590,11 +605,42 @@ local Section = Tab:NewSection("by CUCUMBER")
 
 if HasBadge(1080576579746942) then
     Section:NewButton("give Flintlock", "Подсказка", function()
-    	if HasBadge(1080576579746942) then
-    		BuyGun:FireServer("Flintlock")
-    	else
-    		SISTEM_uvidomleniya("Badge required;", "Winner", 5, 119528748990662)
-    	end	
+        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+            BuyItem("Flintlock")
+        else
+            SISTEM_uvidomleniya("You already have", "Flintlock", 3, 28900020)
+        end
+    end)
+
+    Section:NewButton("Patch Flintlock", "Подсказка", function()
+        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+            BuyItem("Flintlock")
+        end
+
+        if character and character:FindFirstChild("Flintlock") then
+            Humanoid:UnequipTools()
+        end
+        
+        task.wait(0.1)
+        local ToolEquipped = false
+        local Tool = Backpack:WaitForChild("Flintlock")
+        local Handle = Tool:WaitForChild("Handle")
+        local pewpew = Tool:WaitForChild("pewpew")
+        local function Equipped() ToolEquipped = true end
+        local function Unequipped() ToolEquipped = false end
+
+        if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
+
+        Tool:WaitForChild("LocalScript"):destroy()
+
+        local function fair()
+            if not ToolEquipped then return end
+            pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
+        end
+
+        Tool.Equipped:connect(Equipped)
+        Tool.Unequipped:connect(Unequipped)
+        Tool.Activated:Connect(fair)
     end)
 end
 
@@ -621,11 +667,7 @@ do
 end
 
 Section:NewButton("give Zip 22", "Подсказка", function()
-	if getcoins() >= 180 then
-		BuyGun:FireServer("Zip 22")
-	else
-		SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS", 5, 119528748990662)
-	end	
+    BuyItem("Zip 22", 180)
 end)
 
 Section:NewButton("give PowerLogic MD6707-1900", "Подсказка", function()
@@ -641,13 +683,15 @@ local carotoot = Section:NewLabel("sit in cart")
 do
     local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
     local cart = nil
-    local cartC = nil
+    local cartCo = nil
+    local cartCh = nil
     local distansionka = false
     local turning_force = 20
 
     local function allnil()
         cart = nil
-        cartC = nil
+        cartCo = nil
+        cartCh = nil
     end
 
     local function getcart()
@@ -666,10 +710,10 @@ do
     local function updateCart()
         if not cart then return end 
 
-        local On = cartC.On.BrickColor.Name
+        local On = cartCo.On.BrickColor.Name
         local Cartnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
-        local Cartspeed = cartC.Speed.SurfaceGui.TextLabel.Text
-        local fuel = cartC.Fuel.SurfaceGui.Background
+        local Cartspeed = cartCo.Speed.SurfaceGui.TextLabel.Text
+        local fuel = cartCo.Fuel.SurfaceGui.Background
         local fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
         local enabling = "on"
         if On == "Bright red" then
@@ -690,58 +734,124 @@ do
         end
     end)
 
+    Section:NewSlider("turning force", "Подсказка", 50, 1, function(value)
+        turning_force = value
+    end)
+
     Section:NewButton("Cart: Up", "Подсказка", function()
-        if cartC then
-            FireCD:FireServer(cartC.Up.ClickDetector.Clicked)
+        if cartCo  then
+            FireCD:FireServer(cartCo.Up.ClickDetector.Clicked)
         end
     end)
 
     Section:NewButton("Cart: On/Off", "Подсказка", function()
-        if cartC then
-            FireCD:FireServer(cartC.On.ClickDetector.Clicked)
+        if cartCo  then
+            FireCD:FireServer(cartCo.On.ClickDetector.Clicked)
         end
     end)
 
     Section:NewButton("Cart: Down", "Подсказка", function()
-        if cartC then
-            FireCD:FireServer(cartC.Down.ClickDetector.Clicked)
+        if cartCo then
+            FireCD:FireServer(cartCo.Down.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewButton("Cart: Flip", "Подсказка", function()
+        if cartCh then
+            local cartlip = cartCh.Engine
+
+            local pos = Instance.new("BodyPosition")
+            pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+            pos.P = 1e6
+            pos.D = 1e4
+            pos.Position = cartlip.Position + Vector3.new(0, 5, 0)
+            pos.Parent = cartlip
+
+            local gyro = Instance.new("BodyGyro")
+            gyro.MaxTorque = Vector3.new(1e10, 1e10, 1e10)
+            gyro.P = 1e6
+            gyro.D = 2e4
+            gyro.CFrame = CFrame.new(cartlip.Position) * CFrame.Angles(0, math.rad(cartlip.Orientation.Y), 0)
+            gyro.Parent = cartlip
+
+            repeat
+                task.wait()
+            until cartlip.CFrame.UpVector.Y > 0.5 or not cartlip.Parent
+
+            pos:Destroy()
+            gyro:Destroy()
+        end
+    end)
+
+    Section:NewButton("Cart: left", "Подсказка", function()
+        if cartCo then
+            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,turning_force,0)
+        end
+    end)
+
+    Section:NewButton("Cart: right", "Подсказка", function()
+        if cartCo then
+            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,-turning_force,0)
         end
     end)
 
     local bind = Section:NewLabel("bind")
 
     Section:NewKeybind("Cart: Up", "Подсказка", Enum.KeyCode.KeypadEight, function()
-        if cartC and ENEIBLE then
-            FireCD:FireServer(cartC.Up.ClickDetector.Clicked)
+        if cartCo and ENEIBLE then
+            FireCD:FireServer(cartCo.Up.ClickDetector.Clicked)
         end
     end)
 
     Section:NewKeybind("Cart: On/Off", "Подсказка", Enum.KeyCode.KeypadFive, function()
-        if cartC and ENEIBLE then
-            FireCD:FireServer(cartC.On.ClickDetector.Clicked)
+        if cartCo and ENEIBLE then
+            FireCD:FireServer(cartCo.On.ClickDetector.Clicked)
         end
     end)
 
     Section:NewKeybind("Cart: Down", "Подсказка", Enum.KeyCode.KeypadTwo, function()
-        if cartC and ENEIBLE then
-            FireCD:FireServer(cartC.Down.ClickDetector.Clicked)
+        if cartCo and ENEIBLE then
+            FireCD:FireServer(cartCo.Down.ClickDetector.Clicked)
+        end
+    end)
+
+    Section:NewKeybind("Cart: Flip", "Подсказка", Enum.KeyCode.KeypadOne, function()
+        if cartCh and ENEIBLE then
+            local cartlip = cartCh.Engine
+
+            local pos = Instance.new("BodyPosition")
+            pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+            pos.P = 1e6
+            pos.D = 1e4
+            pos.Position = cartlip.Position + Vector3.new(0, 5, 0)
+            pos.Parent = cartlip
+
+            local gyro = Instance.new("BodyGyro")
+            gyro.MaxTorque = Vector3.new(1e10, 1e10, 1e10)
+            gyro.P = 1e6
+            gyro.D = 2e4
+            gyro.CFrame = CFrame.new(cartlip.Position) * CFrame.Angles(0, math.rad(cartlip.Orientation.Y), 0)
+            gyro.Parent = cartlip
+
+            repeat
+                task.wait()
+            until cartlip.CFrame.UpVector.Y > 0.5 or not cartlip.Parent
+
+            pos:Destroy()
+            gyro:Destroy()
         end
     end)
 
     Section:NewKeybind("Cart: left", "Подсказка", Enum.KeyCode.KeypadFour, function()
-        if cartC and ENEIBLE then
+        if cartCo and ENEIBLE then
             cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,turning_force,0)
         end
     end)
 
     Section:NewKeybind("Cart: right", "Подсказка", Enum.KeyCode.KeypadSix, function()
-        if cartC and ENEIBLE then
+        if cartCo and ENEIBLE then
             cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,-turning_force,0)
         end
-    end)
-
-    Section:NewSlider("turning force", "Подсказка", 50, 1, function(value)
-        turning_force = value
     end)
 
     task.spawn(function()
@@ -752,13 +862,14 @@ do
                     if cart then
                         allnil()
                         carotoot:UpdateLabel("sit in cart")
-                    end
+                    end 
                 else
                     local newCart = getcart()
                     if newCart then
                         if cart ~= newCart then
                             cart = newCart
-                            cartC = cart:FindFirstChild("Controls")
+                            cartCo = cart:FindFirstChild("Controls")
+                            cartCh =  cart:FindFirstChild("Chasis")
                         end
                         updateCart()
                     elseif cart then
@@ -770,7 +881,8 @@ do
                 local newCart = getcart()
                 if newCart and cart ~= newCart then
                     cart = newCart
-                    cartC = cart:FindFirstChild("Controls")
+                    cartCo = cart:FindFirstChild("Controls")
+                    cartCh =  cart:FindFirstChild("Chasis")
                 end
                 updateCart()
             end
@@ -838,19 +950,49 @@ do
         end
     end)
 
+    local FireProjectile = ReplicatedStorage.Remotes.FireProjectile
+
+    local function shotgun(plr)
+        FireProjectile:FireServer(
+            localPlayer.Character["Zip 22"],
+            plr.Character.Head,
+            localPlayer.Character.Head.Position,
+            Enum.Material.Plastic,
+            {false, 0, CFrame.new(-100, 11, 356)}
+        )
+    end
+
+    local function killplr(plr)
+        if Backpack:FindFirstChild("Zip 22") or (character and character:FindFirstChild("Zip 22")) then
+            print("esti")
+            Humanoid:EquipTool(Backpack:FindFirstChild("Zip 22"))
+            task.wait(0.2)
+            for i = 1, 16 do
+                shotgun(plr)
+            end
+            Humanoid:UnequipTools()
+        else
+            print("netu")
+            BuyItem("Zip 22", 180)
+            task.wait(0.2)
+            if Backpack:FindFirstChild("Zip 22") or (character and character:FindFirstChild("Zip 22")) then
+                print("esti")
+                Humanoid:EquipTool(Backpack:FindFirstChild("Zip 22"))
+                for i = 1, 16 do
+                    shotgun(plr)
+                end
+                Humanoid:UnequipTools()
+            end
+        end
+    end
+
     Section:NewButton("kill plr", "Подсказка", function()
-        for i = 1, 16 do
-            game:GetService("ReplicatedStorage").Remotes.FireProjectile:FireServer(
-                game:GetService("Players").LocalPlayer.Character["Zip 22"],
-                selectedPlayer.Character.Head,
-                Vector3.new(-148, 5, 405),
-                Enum.Material.Plastic,
-                {
-                    false,
-                    0,
-                    CFrame.new(-100, 11, 356)
-                }
-            )
+        killplr(selectedPlayer)
+    end)
+    
+    Section:NewButton("kill all plr", "Подсказка", function()
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= localPlayer then killplr(p) end
         end
     end)
 end
