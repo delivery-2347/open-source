@@ -17,6 +17,11 @@ local BuyGun = ReplicatedStorage.Remotes.BuyGun
 -- 67
 local CoreGui = game:GetService("CoreGui")
 
+
+local notificationSpam = {}
+local SPAM_INTERVAL = 1
+local BLOCK_TIME = 1
+
 local PopupGui
 local PopupImage
 local PopupVersion = 0
@@ -105,15 +110,35 @@ function NormalizeIcon(iconId)
 end
 
 function SISTEM_uvidomleniya(title, content, duration, iconId, button1, button2, callback)
+    local key = tostring(title) .. "|" .. tostring(content)
+    local now = os.clock()
+    local data = notificationSpam[key]
+    if data and data.blockedUntil then
+        if now < data.blockedUntil then return end
+        notificationSpam[key] = nil
+        data = nil
+    end
+
+    if not data or now - data.lastCall > SPAM_INTERVAL then
+        data = {
+            count = 1,
+            lastCall = now
+        }
+
+        notificationSpam[key] = data
+    else data.count += 1; data.lastCall = now end
+
+    if data.count >= 3 then data.blockedUntil = now + BLOCK_TIME; return end
+
     local notification = {
         Title = title,
         Text = content,
         Duration = duration,
         Icon = NormalizeIcon(iconId)
     }
+
     if button1 or button2 then
         local Bindable = Instance.new("BindableFunction")
-
         Bindable.OnInvoke = function(button)
             if callback then
                 callback(button)
@@ -133,6 +158,8 @@ do
         93390660159546,
         119528748990662,
         28900020,
+        110466728265573, 
+        18471769203,
     }
 
     for _, id in ipairs(ids) do
@@ -603,47 +630,6 @@ local Tab = Window:NewTab("Give")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
-if HasBadge(1080576579746942) then
-    Section:NewButton("give Flintlock", "Подсказка", function()
-        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
-            BuyItem("Flintlock")
-        else
-            SISTEM_uvidomleniya("You already have", "Flintlock", 3, 28900020)
-        end
-    end)
-
-    Section:NewButton("Patch Flintlock", "Подсказка", function()
-        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
-            BuyItem("Flintlock")
-        end
-
-        if character and character:FindFirstChild("Flintlock") then
-            Humanoid:UnequipTools()
-        end
-        
-        task.wait(0.1)
-        local ToolEquipped = false
-        local Tool = Backpack:WaitForChild("Flintlock")
-        local Handle = Tool:WaitForChild("Handle")
-        local pewpew = Tool:WaitForChild("pewpew")
-        local function Equipped() ToolEquipped = true end
-        local function Unequipped() ToolEquipped = false end
-
-        if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
-
-        Tool:WaitForChild("LocalScript"):destroy()
-
-        local function fair()
-            if not ToolEquipped then return end
-            pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
-        end
-
-        Tool.Equipped:connect(Equipped)
-        Tool.Unequipped:connect(Unequipped)
-        Tool.Activated:Connect(fair)
-    end)
-end
-
 do 
 	local watgiwe = nil
 	
@@ -666,13 +652,125 @@ do
 	end)
 end
 
-Section:NewButton("give Zip 22", "Подсказка", function()
+Section:NewButton("give PowerLogic MD6707-1900", "FireServer MD6707-1900", function()
+    game:GetService("ReplicatedStorage").Remotes.RequestCompendium:FireServer()  
+end)
+
+if HasBadge(1080576579746942) then
+    Section:NewButton("give Flintlock", "Подсказка", function()
+        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+            BuyItem("Flintlock")
+        else
+            SISTEM_uvidomleniya("You already have", "Flintlock", 3, 28900020)
+        end
+    end)
+end
+
+Section:NewButton("give Zip 22", "Buy Zip 22", function()
     BuyItem("Zip 22", 180)
 end)
 
-Section:NewButton("give PowerLogic MD6707-1900", "Подсказка", function()
-    game:GetService("ReplicatedStorage").Remotes.RequestCompendium:FireServer()  
-end)
+local Patch = Section:NewLabel("Patch")
+
+if HasBadge(1080576579746942) then
+    Section:NewButton("Patch Flintlock", "Подсказка", function()
+        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+            BuyItem("Flintlock")
+        end
+        if character and character:FindFirstChild("Flintlock") then
+            Humanoid:UnequipTools()
+        end
+
+        task.wait(0.1)
+        local ToolEquipped = false
+        local Tool = Backpack:WaitForChild("Flintlock")
+        local Handle = Tool:WaitForChild("Handle")
+        local pewpew = Tool:WaitForChild("pewpew")
+        local function Equipped() ToolEquipped = true end
+        local function Unequipped() ToolEquipped = false end
+        if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
+        Tool:WaitForChild("LocalScript"):destroy()
+        local function fair()
+            if not ToolEquipped then return end
+            pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
+        end
+        Tool.Equipped:connect(Equipped)
+        Tool.Unequipped:connect(Unequipped)
+        Tool.Activated:Connect(fair)
+    end)
+end
+
+do
+    local Trail = {}
+    Trail.BrickColor = "Lime green"
+    Trail.line_width = 0.13
+    Trail.seconds = 1
+    Trail.Velocity = 0
+    Trail.Range = 500
+
+    local function kastom_setting_Patch_Zip()
+        local Stats = require(game:GetService("ReplicatedStorage").Stats)
+        local Zip22 = Stats.Ranged["Zip 22"]
+        Zip22.MaxAmmo = 0/0
+        Zip22.Ammo = 0/0
+        Zip22.EquipTime = 0
+        Zip22.Firerate = 0
+        Zip22.ReloadTime = 0
+        Zip22.KnockBack = 0
+        Zip22.Accuracy = 0
+        Zip22.Velocity = Trail.Velocity
+        Zip22.Range = Trail.Range
+        Zip22.Recoil = {Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), 0}
+        Zip22.Trail = {BrickColor.new(Trail.BrickColor), Trail.line_width, false, Trail.line_width, Trail.seconds}
+    end
+
+    local function defolt_setting_Patch_Zip()
+        local Stats = game:GetService("ReplicatedStorage").Stats
+        local Stats = require(Stats)    
+        local Zip22 = Stats.Ranged["Zip 22"]
+        Zip22.MaxAmmo = 10
+        Zip22.Ammo = 10
+        Zip22.EquipTime = 0.25
+        Zip22.Firerate = 0.25
+        Zip22.ReloadTime = 3.1
+        Zip22.KnockBack = 5
+        Zip22.Accuracy = 10
+        Zip22.Velocity = 100
+        Zip22.Range = 200
+        Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,}
+        Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}
+    end
+
+    toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state)
+        if state then
+            toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22", state) ;kastom_setting_Patch_Zip()
+        else
+            toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22", state) ;defolt_setting_Patch_Zip()
+        end
+    end)
+
+    local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")
+
+    line_width = Section:NewSlider("Line width", "Подсказка", 9, 0, function(value)
+        Trail.line_width = value / 9 ;kastom_setting_Patch_Zip()
+    end)
+
+    seconds = Section:NewSlider("Seconds existence in\nthe world of the line", "Подсказка", 5, 0, function(value)
+        Trail.seconds = value ;kastom_setting_Patch_Zip()
+    end)
+
+    Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)
+        Trail.Velocity = value ;kastom_setting_Patch_Zip()
+    end)
+
+    Range = Section:NewSlider("Maximum\nline distance", "Подсказка", 500, 100, function(value)
+        Trail.Range = value ;kastom_setting_Patch_Zip()
+    end)
+
+    Section:NewColorPicker("Color line", "Подсказка", Color3.fromRGB(255, 0, 0), function(color)
+        Trail.BrickColor = color ;kastom_setting_Patch_Zip()
+    end)
+end
 
 local Tab = Window:NewTab("control cart")
 
@@ -685,13 +783,21 @@ do
     local cart = nil
     local cartCo = nil
     local cartCh = nil
+    local cartWh = nil
+    local Cartnum = nil
+    local Cartspeed = nil
+    local fuelPercent = nil
+    local enabling = "off"
+    local txtcarotoot = "sit in cart"
     local distansionka = false
+    local masinka_katasya = false
     local turning_force = 20
 
     local function allnil()
         cart = nil
         cartCo = nil
         cartCh = nil
+        cartWh = nil
     end
 
     local function getcart()
@@ -707,30 +813,52 @@ do
         return nil
     end
 
+    local function masinkaihati(speed, enable)
+        if not masinka_katasya or not cart or ENEIBLE then return end
+        local vkl = enable == "on"
+
+        local hinges = {
+            cartWh.Left:GetChildren()[2],
+            cartWh.Left.L,
+            cartWh.Right:GetChildren()[2],
+            cartWh.Right.R
+        }
+
+        for _, wheel in ipairs(hinges) do
+            local hinge = wheel.HingeConstraint
+
+            hinge.ActuatorType = Enum.ActuatorType.Motor
+            hinge.AngularVelocity = vkl and (wheel.Name == "L" and speed or -speed) or 0
+            hinge.MotorMaxTorque = math.huge
+        end
+    end
+
     local function updateCart()
         if not cart then return end 
 
         local On = cartCo.On.BrickColor.Name
-        local Cartnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
-        local Cartspeed = cartCo.Speed.SurfaceGui.TextLabel.Text
+        Cartnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
+        Cartspeed = cartCo.Speed.SurfaceGui.TextLabel.Text
         local fuel = cartCo.Fuel.SurfaceGui.Background
-        local fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
-        local enabling = "on"
+        fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
+        enabling = "on"
         if On == "Bright red" then
             enabling = "off"
         end
-        carotoot:UpdateLabel(
+        txtcarotoot =
             Cartnum
             .. " / Speed : " .. Cartspeed
             .. " / Fuel : " .. fuelPercent .. "%"
             .. " / Enabling : " .. enabling
-        )
+         
+        carotoot:UpdateLabel(txtcarotoot)
+        masinkaihati(Cartspeed, enabling)
     end
     
     toggleall.toggl_Cart_remote_control = Section:NewToggle("Cart: remote control", "remote control Cart", function(state)
         distansionka = state
         if distansionka then
-            carotoot:UpdateLabel("Go to the cart and click Update")
+            carotoot:UpdateLabel("Go to the cart and click hui")
         end
     end)
 
@@ -854,6 +982,18 @@ do
         end
     end)
 
+    local masinka = Section:NewLabel("to drive a car without fuel")
+
+    toggleall.toggl_to_drive_a_car_without_fuel = Section:NewToggle("Cart: to drive a car without fuel", "Подсказка", function(state)
+        if fuelPercent >= 1 or fuelPercent == nil then 
+            toggleall.toggl_to_drive_a_car_without_fuel:UpdateToggle("Cart: ihati sam masinka", false)
+            SISTEM_uvidomleniya("You have enough", "fuel", 3, 110466728265573)
+            return 
+        end
+        masinka_katasya = state
+        masinkaihati()
+    end)
+
     task.spawn(function()
         while ENEIBLE do
             task.wait(0.05)
@@ -870,6 +1010,7 @@ do
                             cart = newCart
                             cartCo = cart:FindFirstChild("Controls")
                             cartCh =  cart:FindFirstChild("Chasis")
+                            cartWh =  cart:FindFirstChild("Wheels")   
                         end
                         updateCart()
                     elseif cart then
@@ -883,12 +1024,34 @@ do
                     cart = newCart
                     cartCo = cart:FindFirstChild("Controls")
                     cartCh =  cart:FindFirstChild("Chasis")
+                    cartWh =  cart:FindFirstChild("Wheels") 
                 end
                 updateCart()
             end
         end
     end)
     localPlayer.CharacterAdded:Connect(function() allnil() ;carotoot:UpdateLabel("sit in cart") end)
+end
+
+do 
+	repeat
+	    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+	        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
+	            local title = gui:FindFirstChild("title", true)
+	            if title and title:IsA("TextLabel") and title.Text:find("CRTSCC HUB", 1, true) then
+	                ril_nem = gui
+	                break
+	            end
+	        end
+	    end
+	    task.wait(0.05)
+	until ril_nem
+
+	ril_nem.Destroying:Connect(function()
+	    ENEIBLE = false
+        for _, toggle in pairs(toggleall) do toggle:UpdateToggle("If you see this message, your GUI is frozen. Reboot it.", false) end
+		print("da blina 😭😭😭😭😭😭")
+	end)
 end
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
@@ -904,26 +1067,108 @@ end)
 do
     local selectedPlayer
     local playerOptions = {}
+    local waitlist = {}
+    local waitlistOptions = {}
+    local autoWaitlistPlayers = {}
+    local autoWaitlist = false
+    local PlayerDropdown
+    local WaitlistDropdown
+    
     local function GetPlayerList()
         local list = {}
         table.clear(playerOptions)
 
         for _, p in ipairs(Players:GetPlayers()) do
-            local name = p.DisplayName .. " (@" .. p.Name .. " | ID: " .. p.UserId .. ")"
-            playerOptions[name] = p
-            table.insert(list, name)
+            if p ~= localPlayer and not waitlist[p.UserId] then
+                local name = p.DisplayName .. " (@" .. p.Name .. " | ID: " .. p.UserId .. ")"
+                playerOptions[name] = p
+                table.insert(list, name)
+            end
         end
 
         table.sort(list)
         return list
     end
 
-    local PlayerDropdown = Section:NewDropdown("plr selected", "Выберите игрока", GetPlayerList(), function(selected)
+    local function GetWaitlistPlayerList(excludedPlayer)
+        local list = {}
+        table.clear(waitlistOptions)
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= localPlayer and p ~= excludedPlayer and not waitlist[p.UserId] then
+                local name = p.DisplayName .. " (@" .. p.Name .. " | ID: " .. p.UserId .. ")"
+                waitlistOptions[name] = p
+                table.insert(list, name)
+            end
+        end
+
+        table.sort(list)
+        return list
+    end
+
+    local function RefreshWaitlist()
+        if WaitlistDropdown then
+            WaitlistDropdown:Refresh(GetWaitlistPlayerList())
+        end
+    end
+
+    local function AddFriendToWaitlist(p)
+        if not autoWaitlist or p == localPlayer or waitlist[p.UserId] then
+            return
+        end
+
+        local success, isFriend = pcall(function()
+            return localPlayer:IsFriendsWithAsync(p.UserId)
+        end)
+
+        if success and isFriend and autoWaitlist then
+            waitlist[p.UserId] = true
+            autoWaitlistPlayers[p.UserId] = true
+
+            RefreshWaitlist()
+            PlayerDropdown:Refresh(GetPlayerList())
+        end
+    end
+
+    PlayerDropdown = Section:NewDropdown("plr selected", "Выберите игрока", GetPlayerList(), function(selected)
         selectedPlayer = playerOptions[selected]
     end)
 
-    Players.PlayerAdded:Connect(function()
+    WaitlistDropdown = Section:NewDropdown("Whitelist", "Выберите игрока для добавления в белый список", GetWaitlistPlayerList(), function(selected)
+        local p = waitlistOptions[selected]
+
+        if p and p ~= localPlayer then
+            waitlist[p.UserId] = true
+            RefreshWaitlist()
+        end
+    end)
+
+    toggleall.Auto_Whitelist = Section:NewToggle("Auto Whitelist", "Автоматически добавлять друзей в белый список", function(state)
+        autoWaitlist = state
+
+        if state then
+            for _, p in ipairs(Players:GetPlayers()) do
+                task.spawn(AddFriendToWaitlist, p)
+            end
+        else
+            for userId in pairs(autoWaitlistPlayers) do
+                waitlist[userId] = nil
+            end
+
+            table.clear(autoWaitlistPlayers)
+
+            RefreshWaitlist()
+            PlayerDropdown:Refresh(GetPlayerList())
+        end
+    end)
+
+    Players.PlayerAdded:Connect(function(p)
         PlayerDropdown:Refresh(GetPlayerList())
+        WaitlistDropdown:Refresh(GetWaitlistPlayerList())
+
+        if autoWaitlist then
+            task.spawn(AddFriendToWaitlist, p)
+        end
     end)
 
     Players.PlayerRemoving:Connect(function(p)
@@ -932,19 +1177,15 @@ do
         end
 
         PlayerDropdown:Refresh(GetPlayerList())
+        WaitlistDropdown:Refresh(GetWaitlistPlayerList(p))
     end)
-
-    local lastSelect = 0
     
     Section:NewKeybind("Select player", "Наведи мышку и нажми X", Enum.KeyCode.X, function()
-        if os.clock() - lastSelect < 1 then return end
-        lastSelect = os.clock()
-    
         local target = Mouse.Target
         local character = target and target:FindFirstAncestorOfClass("Model")
         local player = character and Players:GetPlayerFromCharacter(character)
     
-        if player and selectedPlayer ~= player then
+        if player and player ~= localPlayer and not waitlist[player.UserId] and selectedPlayer ~= player then
             selectedPlayer = player
             SISTEM_uvidomleniya("Player", "Selected player: " .. player.Name, 0, Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420))
         end
@@ -992,7 +1233,7 @@ do
     
     Section:NewButton("kill all plr", "Подсказка", function()
         for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= localPlayer then killplr(p) end
+            if p ~= localPlayer and not waitlist[p.UserId] then killplr(p) end
         end
     end)
 end
