@@ -814,7 +814,7 @@ do
     end
 
     local function masinkaihati(speed, enable)
-        if not masinka_katasya or not cart or ENEIBLE then return end
+        if not masinka_katasya or not cart or not ENEIBLE then return end
         local vkl = enable == "on"
 
         local hinges = {
@@ -1279,6 +1279,18 @@ do
 	ril_nem.Destroying:Connect(function()
 	    ENEIBLE = false
         for _, toggle in pairs(toggleall) do toggle:UpdateToggle("If you see this message, your GUI is frozen. Reboot it.", false) end
+        Zip22 = require(game:GetService("ReplicatedStorage").Stats).Ranged["Zip 22"]
+        Zip22.MaxAmmo = 10
+        Zip22.Ammo = 10
+        Zip22.EquipTime = 0.25
+        Zip22.Firerate = 0.25
+        Zip22.ReloadTime = 3.1
+        Zip22.KnockBack = 5
+        Zip22.Accuracy = 10
+        Zip22.Velocity = 100
+        Zip22.Range = 200
+        Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,}
+        Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}
 		print("da blina 😭😭😭😭😭😭")
 	end)
 end
