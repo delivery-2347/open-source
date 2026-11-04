@@ -158,13 +158,12 @@ do
         93390660159546,
         119528748990662,
         28900020,
-        110466728265573, 
         18471769203,
     }
 
-    for _, id in ipairs(ids) do
+    for num, id in ipairs(ids) do
         task.spawn(function()
-            SISTEM_uvidomleniya("download assist", "67", 0, id)
+            SISTEM_uvidomleniya("download assist:" .. num, "67", 0, id)
         end)
     end
 end
@@ -216,7 +215,7 @@ localPlayer.CharacterAdded:Connect(function(char)
     Backpack = localPlayer.Backpack
 end)
 
-local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/super%20puper%20optimezison"))()
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/Kavo%20Ultimate/Kavo%20Ultimate"))()
 
 local CUCUMBER = {
     SchemeColor = Color3.fromRGB(45, 150, 85),
@@ -700,77 +699,76 @@ if HasBadge(1080576579746942) then
     end)
 end
 
-do
-    local Trail = {}
-    Trail.BrickColor = "Lime green"
-    Trail.line_width = 0.13
-    Trail.seconds = 1
-    Trail.Velocity = 0
-    Trail.Range = 500
+local Trail, sikillyaamo = {}, false
+Trail.BrickColor = "Lime green" 
+Trail.line_width = 0.13 
+Trail.seconds = 1   
+Trail.Velocity = 0  
+Trail.Range = 500   
 
-    local function kastom_setting_Patch_Zip()
-        local Stats = require(game:GetService("ReplicatedStorage").Stats)
-        local Zip22 = Stats.Ranged["Zip 22"]
-        Zip22.MaxAmmo = 0/0
-        Zip22.Ammo = 0/0
-        Zip22.EquipTime = 0
-        Zip22.Firerate = 0
-        Zip22.ReloadTime = 0
-        Zip22.KnockBack = 0
-        Zip22.Accuracy = 0
-        Zip22.Velocity = Trail.Velocity
-        Zip22.Range = Trail.Range
-        Zip22.Recoil = {Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), 0}
-        Zip22.Trail = {BrickColor.new(Trail.BrickColor), Trail.line_width, false, Trail.line_width, Trail.seconds}
-    end
+local function kastom_setting_Patch_Zip()   
+    sikillyaamo = true  
+    local Stats = require(game:GetService("ReplicatedStorage").Stats)   
+    local Zip22 = Stats.Ranged["Zip 22"]    
+    Zip22.MaxAmmo = 0/0 
+    task.spawn(function() while sikillyaamo do task.wait(0.1); Zip22.Ammo = 0/0 end end) 
+    Zip22.EquipTime = 0 
+    Zip22.Firerate = 0  
+    Zip22.ReloadTime = 0    
+    Zip22.KnockBack = 0 
+    Zip22.Accuracy = 0  
+    Zip22.Velocity = Trail.Velocity 
+    Zip22.Range = Trail.Range   
+    Zip22.Recoil = {Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), 0}  
+    Zip22.Trail = {BrickColor.new(Trail.BrickColor), Trail.line_width, false, Trail.line_width, Trail.seconds}  
+end 
 
-    local function defolt_setting_Patch_Zip()
-        local Stats = game:GetService("ReplicatedStorage").Stats
-        local Stats = require(Stats)    
-        local Zip22 = Stats.Ranged["Zip 22"]
-        Zip22.MaxAmmo = 10
-        Zip22.Ammo = 10
-        Zip22.EquipTime = 0.25
-        Zip22.Firerate = 0.25
-        Zip22.ReloadTime = 3.1
-        Zip22.KnockBack = 5
-        Zip22.Accuracy = 10
-        Zip22.Velocity = 100
-        Zip22.Range = 200
-        Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,}
-        Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}
-    end
+local function defolt_setting_Patch_Zip()  
+    sikillyaamo = false
+    local Stats = require(game:GetService("ReplicatedStorage").Stats)       
+    local Zip22 = Stats.Ranged["Zip 22"]   
+    Zip22.MaxAmmo = 10 
+    Zip22.Ammo = 10
+    Zip22.EquipTime = 0.25
+    Zip22.Firerate = 0.25
+    Zip22.ReloadTime = 3.1
+    Zip22.KnockBack = 5
+    Zip22.Accuracy = 10
+    Zip22.Velocity = 100
+    Zip22.Range = 200  
+    Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,} 
+    Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}   
+end 
 
-    toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state)
-        if state then
-            toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22", state) ;kastom_setting_Patch_Zip()
-        else
-            toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22", state) ;defolt_setting_Patch_Zip()
-        end
-    end)
+toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state) 
+    if state then   
+        toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22", state) ;kastom_setting_Patch_Zip()    
+    else    
+        toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22", state) ;defolt_setting_Patch_Zip()  
+    end 
+end)    
 
-    local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")
+local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")   
 
-    line_width = Section:NewSlider("Line width", "Подсказка", 9, 0, function(value)
-        Trail.line_width = value / 9 ;kastom_setting_Patch_Zip()
-    end)
+line_width = Section:NewSlider("Line width", "Подсказка", 20, 0, function(value)    
+    Trail.line_width = value / 21 ;kastom_setting_Patch_Zip()   
+end)    
 
-    seconds = Section:NewSlider("Seconds existence in\nthe world of the line", "Подсказка", 5, 0, function(value)
-        Trail.seconds = value ;kastom_setting_Patch_Zip()
-    end)
+seconds = Section:NewSlider("Seconds existence in\nthe world of the line", "Подсказка", 5, 0, function(value)   
+    Trail.seconds = value ;kastom_setting_Patch_Zip()   
+end)    
+    
+Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)    
+    Trail.Velocity = value ;kastom_setting_Patch_Zip()  
+end)    
 
-    Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)
-        Trail.Velocity = value ;kastom_setting_Patch_Zip()
-    end)
+Range = Section:NewSlider("Maximum\nline distance", "Подсказка", 500, 100, function(value)  
+    Trail.Range = value ;kastom_setting_Patch_Zip() 
+end)    
 
-    Range = Section:NewSlider("Maximum\nline distance", "Подсказка", 500, 100, function(value)
-        Trail.Range = value ;kastom_setting_Patch_Zip()
-    end)
-
-    Section:NewColorPicker("Color line", "Подсказка", Color3.fromRGB(255, 0, 0), function(color)
-        Trail.BrickColor = color ;kastom_setting_Patch_Zip()
-    end)
-end
+Section:NewColorPicker("Color line", "Подсказка", Color3.fromRGB(255, 0, 0), function(color)    
+    Trail.BrickColor = color ;kastom_setting_Patch_Zip()    
+end)    
 
 local Tab = Window:NewTab("control cart")
 
@@ -1238,35 +1236,66 @@ Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
     Kavo:ToggleUI()
 end)
 
-do 
-	repeat
-	    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
-	        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
-	            local title = gui:FindFirstChild("title", true)
-	            if title and title:IsA("TextLabel") and title.Text:find("CRTSCC HUB", 1, true) then
-	                ril_nem = gui
-	                break
-	            end
-	        end
-	    end
-	    task.wait(0.05)
-	until ril_nem
+do
+    ril_nem = nil
 
-	ril_nem.Destroying:Connect(function()
-	    ENEIBLE = false
-        for _, toggle in pairs(toggleall) do toggle:UpdateToggle("If you see this message, your GUI is frozen. Reboot it.", false) end
-        Zip22 = require(game:GetService("ReplicatedStorage").Stats).Ranged["Zip 22"]
-        Zip22.MaxAmmo = 10
-        Zip22.Ammo = 10
-        Zip22.EquipTime = 0.25
-        Zip22.Firerate = 0.25
-        Zip22.ReloadTime = 3.1
-        Zip22.KnockBack = 5
-        Zip22.Accuracy = 10
-        Zip22.Velocity = 100
-        Zip22.Range = 200
-        Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,}
-        Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}
-		print("da blina 😭😭😭😭😭😭")
-	end)
+    repeat
+        for _, obj in ipairs(CoreGui:GetDescendants()) do
+            if obj:IsA("TextLabel") and obj.Text:find("CRTSCC HUB", 1, true) then
+                local parent = obj.Parent
+
+                while parent and parent ~= CoreGui do
+                    if parent:IsA("ScreenGui") then
+                        ril_nem = parent
+                        print("GUI найден:", ril_nem:GetFullName())
+                        break
+                    end
+
+                    parent = parent.Parent
+                end
+
+                if ril_nem then
+                    break
+                end
+            end
+        end
+
+        if not ril_nem then
+            task.wait(0.05)
+        end
+    until ril_nem
+
+    local watchedGui = ril_nem
+    local destroyed = false
+
+    local function OnGuiDestroyed()
+        if destroyed then return end
+        destroyed = true
+
+        if ril_nem == watchedGui then
+            ril_nem = nil
+        end
+
+        ENEIBLE = false
+
+        for _, toggle in pairs(toggleall) do
+            pcall(function()
+                toggle:UpdateToggle(
+                    "If you see this message, your GUI is frozen. Reboot it.",
+                    false
+                )
+            end)
+        end
+
+        defolt_setting_Patch_Zip()
+        print("da blina 😭😭😭😭😭😭")
+    end
+
+    watchedGui.Destroying:Connect(OnGuiDestroyed)
+
+    watchedGui.AncestryChanged:Connect(function(_, parent)
+        if parent == nil then
+            OnGuiDestroyed()
+        end
+    end)
 end
