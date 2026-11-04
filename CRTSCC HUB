@@ -234,7 +234,7 @@ local Section = Tab:NewSection("by CUCUMBER")
 
 
 
-local Tab = Window:NewTab("menu")
+local Tab = Window:NewTab("opening")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
@@ -779,7 +779,7 @@ local Section = Tab:NewSection("by CUCUMBER")
 local carotoot = Section:NewLabel("sit in cart")
 
 do
-    local FireCD = game:GetService("ReplicatedStorage").Remotes.FireCD
+    toggleall.toggl_to_drive_a_car_without_fuel = nil
     local cart = nil
     local cartCo = nil
     local cartCh = nil
@@ -985,11 +985,6 @@ do
     local masinka = Section:NewLabel("to drive a car without fuel")
 
     toggleall.toggl_to_drive_a_car_without_fuel = Section:NewToggle("Cart: to drive a car without fuel", "Подсказка", function(state)
-        if fuelPercent >= 1 or fuelPercent == nil then 
-            toggleall.toggl_to_drive_a_car_without_fuel:UpdateToggle("Cart: ihati sam masinka", false)
-            SISTEM_uvidomleniya("You have enough", "fuel", 3, 110466728265573)
-            return 
-        end
         masinka_katasya = state
         masinkaihati()
     end)
@@ -1007,6 +1002,7 @@ do
                     local newCart = getcart()
                     if newCart then
                         if cart ~= newCart then
+                            allnil()
                             cart = newCart
                             cartCo = cart:FindFirstChild("Controls")
                             cartCh =  cart:FindFirstChild("Chasis")
@@ -1021,6 +1017,7 @@ do
             else
                 local newCart = getcart()
                 if newCart and cart ~= newCart then
+                    allnil()
                     cart = newCart
                     cartCo = cart:FindFirstChild("Controls")
                     cartCh =  cart:FindFirstChild("Chasis")
@@ -1031,27 +1028,6 @@ do
         end
     end)
     localPlayer.CharacterAdded:Connect(function() allnil() ;carotoot:UpdateLabel("sit in cart") end)
-end
-
-do 
-	repeat
-	    for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
-	        if gui:IsA("ScreenGui") and gui.Name:match("^%d+$") then
-	            local title = gui:FindFirstChild("title", true)
-	            if title and title:IsA("TextLabel") and title.Text:find("CRTSCC HUB", 1, true) then
-	                ril_nem = gui
-	                break
-	            end
-	        end
-	    end
-	    task.wait(0.05)
-	until ril_nem
-
-	ril_nem.Destroying:Connect(function()
-	    ENEIBLE = false
-        for _, toggle in pairs(toggleall) do toggle:UpdateToggle("If you see this message, your GUI is frozen. Reboot it.", false) end
-		print("da blina 😭😭😭😭😭😭")
-	end)
 end
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
