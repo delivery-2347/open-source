@@ -40,6 +40,14 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtmPi9yxzjJ7hRO7uQj9LX0cVrhlX6EvYGHhaHzjON6A&s=10" width="100">
 </a>
 
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/Discord%20webhook%20support"))()
+```
+<img width="518" height="308" alt="image" src="https://github.com/user-attachments/assets/d15c74d4-f1ff-4e09-b715-b11c60c3de57" /><img width="397" height="34" alt="image" src="https://github.com/user-attachments/assets/df0776b3-30b0-4f03-a981-1e13264452ec" />
+
+
+
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/HTTP%20SPY.lua"))()
 ```
