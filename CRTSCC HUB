@@ -1050,7 +1050,7 @@ do
     end)
 
     
-    toglall.Patch_grab = Section:NewToggle("Patch grab", "Подсказка",function(start)
+    toggleall.Patch_grab = Section:NewToggle("Patch grab", "Подсказка",function(start)
         set_grab_mode(start)
     end)
 end
