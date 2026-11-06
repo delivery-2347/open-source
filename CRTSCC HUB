@@ -231,6 +231,59 @@ local Tab = Window:NewTab("Info")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
+do
+    ril_nem = nil
+    repeat
+        for _, obj in ipairs(CoreGui:GetDescendants()) do
+            if obj:IsA("TextLabel") and obj.Text:find("CRTSCC HUB", 1, true) then
+                local parent = obj.Parent
+
+                while parent and parent ~= CoreGui do
+                    if parent:IsA("ScreenGui") then
+                        ril_nem = parent
+                        print("GUI найден:", ril_nem:GetFullName())
+                        break
+                    end
+
+                    parent = parent.Parent
+                end
+
+                if ril_nem then
+                    break
+                end
+            end
+        end
+        if not ril_nem then
+            task.wait(0.05)
+        end
+    until ril_nem
+    local watchedGui = ril_nem
+    local destroyed = false
+    local function OnGuiDestroyed()
+        if destroyed then return end
+        destroyed = true
+        if ril_nem == watchedGui then
+            ril_nem = nil
+        end
+        ENEIBLE = false
+        for _, toggle in pairs(toggleall) do
+            pcall(function()
+                toggle:UpdateToggle(
+                    "If you see this message, your GUI is frozen. Reboot it.",
+                    false
+                )
+            end)
+        end
+        print("da blina 😭😭😭😭😭😭")
+    end
+    watchedGui.Destroying:Connect(OnGuiDestroyed)
+    watchedGui.AncestryChanged:Connect(function(_, parent)
+        if parent == nil then
+            OnGuiDestroyed()
+        end
+    end)
+end
+
 
 
 local Tab = Window:NewTab("opening")
@@ -246,16 +299,15 @@ Section:NewButton("opening a door: first method", "Button.ClickDetector", functi
 end)
 
 Section:NewButton("opening a door: second method", "door noclip", function()
-	workspace.Islands.BorderCheckpoint.Gate.Door1.CanCollide = false
-	workspace.Islands.BorderCheckpoint.Gate.Door2.CanCollide = false
-	workspace.Islands.BorderCheckpoint.Gate.Door1.Transparency = 0.5
-	workspace.Islands.BorderCheckpoint.Gate.Door2.Transparency = 0.5
-	SISTEM_uvidomleniya("5 seconds—hurry up!", "furry", 4, 70627586472131)
-	task.wait(5)
-	workspace.Islands.BorderCheckpoint.Gate.Door1.CanCollide = true
-	workspace.Islands.BorderCheckpoint.Gate.Door2.CanCollide = true
-	workspace.Islands.BorderCheckpoint.Gate.Door1.Transparency = 0
-	workspace.Islands.BorderCheckpoint.Gate.Door2.Transparency = 0
+    local Doors = workspace.Islands.BorderCheckpoint.Gate
+    for _, Door in ipairs({Doors.Door1, Doors.Door2}) do
+        Door.CanCollide, Door.Transparency = false, 0.5
+    end
+    SISTEM_uvidomleniya("5 seconds—hurry up!", "furry", 4, 70627586472131)
+    task.wait(5)
+    for _, Door in ipairs({Doors.Door1, Doors.Door2}) do
+        Door.CanCollide, Door.Transparency = true, 0
+    end
 end)
 
 local Tab = Window:NewTab("FARM")
@@ -385,12 +437,9 @@ do
     local NOTIFICATION_TIME, NOTIFICATION_WIDTH = 3, 260
     local Coins = { Common = 20, Uncommon = 40, Rare = 100, Epic = 200, Legendary = 750 }
     local Colors = {
-        Common = Color3.fromRGB(180, 180, 180),
-        Uncommon = Color3.fromRGB(80, 200, 120),
-        Rare = Color3.fromRGB(80, 150, 255),
-        Epic = Color3.fromRGB(185, 100, 255),
-        Legendary = Color3.fromRGB(255, 177, 65),
-        Hidden = Color3.fromRGB(255, 80, 100),
+        Common = Color3.fromRGB(180, 180, 180), Uncommon = Color3.fromRGB(80, 200, 120),
+        Rare = Color3.fromRGB(80, 150, 255), Epic = Color3.fromRGB(185, 100, 255),
+        Legendary = Color3.fromRGB(255, 177, 65), Hidden = Color3.fromRGB(255, 80, 100),
     }
 
     local CustomEnabled, NotificationId = false, 0
@@ -398,35 +447,37 @@ do
     local ProtectionConnections = {}
     local GuiAddedConnection, RewardConnection
 
+    local function Create(Class, Parent, Properties)
+        local Object = Instance.new(Class)
+        for Property, Value in pairs(Properties) do Object[Property] = Value end
+        Object.Parent = Parent
+        return Object
+    end
+
     local function Disconnect(Connection)
         if Connection then Connection:Disconnect() end
     end
 
     local function ClearProtection()
-        for _, Connection in ipairs(ProtectionConnections) do
-            Disconnect(Connection)
-        end
+        for _, Connection in ipairs(ProtectionConnections) do Disconnect(Connection) end
         table.clear(ProtectionConnections)
     end
 
     local function FindMain(Gui)
-        local Frame1 = Gui:FindFirstChild("Frame")
-        local Frame2 = Frame1 and Frame1:FindFirstChild("Frame")
-        local Main = Frame2 and Frame2:FindFirstChild("Main")
+        local Main = Gui:FindFirstChild("Frame")
+        Main = Main and Main:FindFirstChild("Frame")
+        Main = Main and Main:FindFirstChild("Main")
         return Main and Main:IsA("LocalScript") and Main or nil
     end
 
     local function ProtectMain(Main)
         if not Main or not Main:IsA("LocalScript") then return end
-        if OldMain == Main then
-            Main.Disabled = true
-            return
-        end
+        if OldMain == Main then Main.Disabled = true; return end
 
         OldMain, OldMainDisabled = Main, Main.Disabled
-        table.insert(ProtectionConnections, Main:GetPropertyChangedSignal("Disabled"):Connect(function()
+        ProtectionConnections[#ProtectionConnections + 1] = Main:GetPropertyChangedSignal("Disabled"):Connect(function()
             if CustomEnabled and not Main.Disabled then Main.Disabled = true end
-        end))
+        end)
         Main.Disabled = true
     end
 
@@ -438,11 +489,11 @@ do
             OldGui, OldGuiEnabled = Gui, Gui.Enabled
             OldMain, OldMainDisabled = nil, nil
 
-            table.insert(ProtectionConnections, Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+            ProtectionConnections[#ProtectionConnections + 1] = Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
                 if CustomEnabled and Gui.Enabled then Gui.Enabled = false end
-            end))
+            end)
 
-            table.insert(ProtectionConnections, Gui.DescendantAdded:Connect(function(Object)
+            ProtectionConnections[#ProtectionConnections + 1] = Gui.DescendantAdded:Connect(function(Object)
                 if not CustomEnabled or Object.Name ~= "Main" or not Object:IsA("LocalScript") then return end
                 task.defer(function()
                     if CustomEnabled and Object.Parent then
@@ -450,7 +501,7 @@ do
                         if FoundMain then ProtectMain(FoundMain) end
                     end
                 end)
-            end))
+            end)
         end
 
         local Main = FindMain(Gui)
@@ -462,77 +513,54 @@ do
     local PreviousGui = PlayerGui:FindFirstChild("StochasticNotificationGUI")
     if PreviousGui then PreviousGui:Destroy() end
 
-    local Gui = Instance.new("ScreenGui")
-    Gui.Name = "StochasticNotificationGUI"
-    Gui.ResetOnSpawn = false
-    Gui.IgnoreGuiInset = true
-    Gui.DisplayOrder = 999999
-    Gui.Enabled = false
-    Gui.Parent = PlayerGui
+    local Gui = Create("ScreenGui", PlayerGui, {
+        Name = "StochasticNotificationGUI", ResetOnSpawn = false,
+        IgnoreGuiInset = true, DisplayOrder = 999999, Enabled = false,
+    })
 
-    local Frame = Instance.new("Frame")
-    Frame.Name = "Notification"
-    Frame.Size = UDim2.fromOffset(NOTIFICATION_WIDTH, 82)
-    Frame.Position = UDim2.new(1, -15, 0.5, 0)
-    Frame.AnchorPoint = Vector2.new(1, 0.5)
-    Frame.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
-    Frame.BorderSizePixel = 0
-    Frame.Visible = false
-    Frame.Parent = Gui
-    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+    local Frame = Create("Frame", Gui, {
+        Name = "Notification", Size = UDim2.fromOffset(NOTIFICATION_WIDTH, 82),
+        Position = UDim2.new(1, -15, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5),
+        BackgroundColor3 = Color3.fromRGB(12, 14, 20), BorderSizePixel = 0, Visible = false,
+    })
+    Create("UICorner", Frame, { CornerRadius = UDim.new(0, 8) })
 
-    local Stroke = Instance.new("UIStroke")
-    Stroke.Thickness = 1
-    Stroke.Color = Color3.fromRGB(80, 200, 120)
-    Stroke.Transparency = 0.2
-    Stroke.Parent = Frame
+    local Stroke = Create("UIStroke", Frame, {
+        Thickness = 1, Color = Color3.fromRGB(80, 200, 120), Transparency = 0.2,
+    })
 
-    local Accent = Instance.new("Frame")
-    Accent.Size = UDim2.new(0, 3, 1, -16)
-    Accent.Position = UDim2.fromOffset(6, 8)
-    Accent.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
-    Accent.BorderSizePixel = 0
-    Accent.Parent = Frame
-    Instance.new("UICorner", Accent).CornerRadius = UDim.new(1, 0)
+    local Accent = Create("Frame", Frame, {
+        Size = UDim2.new(0, 3, 1, -16), Position = UDim2.fromOffset(6, 8),
+        BackgroundColor3 = Color3.fromRGB(80, 200, 120), BorderSizePixel = 0,
+    })
+    Create("UICorner", Accent, { CornerRadius = UDim.new(1, 0) })
 
-    local Header = Instance.new("TextLabel")
-    Header.Position = UDim2.fromOffset(16, 7)
-    Header.Size = UDim2.new(1, -25, 0, 17)
-    Header.BackgroundTransparency = 1
-    Header.Font = Enum.Font.GothamMedium
-    Header.TextSize = 11
-    Header.TextColor3 = Color3.fromRGB(155, 165, 175)
-    Header.TextXAlignment = Enum.TextXAlignment.Left
-    Header.Parent = Frame
+    local Header = Create("TextLabel", Frame, {
+        Position = UDim2.fromOffset(16, 7), Size = UDim2.new(1, -25, 0, 17),
+        BackgroundTransparency = 1, Font = Enum.Font.GothamMedium, TextSize = 11,
+        TextColor3 = Color3.fromRGB(155, 165, 175), TextXAlignment = Enum.TextXAlignment.Left,
+    })
 
-    local ItemName = Instance.new("TextLabel")
-    ItemName.Position = UDim2.fromOffset(16, 27)
-    ItemName.Size = UDim2.new(1, -25, 0, 23)
-    ItemName.BackgroundTransparency = 1
-    ItemName.Font = Enum.Font.GothamBold
-    ItemName.TextSize = 15
-    ItemName.TextColor3 = Color3.fromRGB(240, 240, 245)
-    ItemName.TextXAlignment = Enum.TextXAlignment.Left
-    ItemName.TextTruncate = Enum.TextTruncate.AtEnd
-    ItemName.Parent = Frame
+    local ItemName = Create("TextLabel", Frame, {
+        Position = UDim2.fromOffset(16, 27), Size = UDim2.new(1, -25, 0, 23),
+        BackgroundTransparency = 1, Font = Enum.Font.GothamBold, TextSize = 15,
+        TextColor3 = Color3.fromRGB(240, 240, 245), TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
 
-    local Details = Instance.new("TextLabel")
-    Details.Position = UDim2.fromOffset(16, 54)
-    Details.Size = UDim2.new(1, -25, 0, 17)
-    Details.BackgroundTransparency = 1
-    Details.Font = Enum.Font.Gotham
-    Details.TextSize = 11
-    Details.TextColor3 = Color3.fromRGB(180, 185, 195)
-    Details.TextXAlignment = Enum.TextXAlignment.Left
-    Details.TextTruncate = Enum.TextTruncate.AtEnd
-    Details.Parent = Frame
+    local Details = Create("TextLabel", Frame, {
+        Position = UDim2.fromOffset(16, 54), Size = UDim2.new(1, -25, 0, 17),
+        BackgroundTransparency = 1, Font = Enum.Font.Gotham, TextSize = 11,
+        TextColor3 = Color3.fromRGB(180, 185, 195), TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
 
     local function Notify(Name, IsDuplicate)
         if not CustomEnabled then return end
 
         Name = tostring(Name or "Unknown")
         local Component = Components:FindFirstChild(Name)
-        local Rarity = (Component and Component:GetAttribute("Rarity")) or "Common"
+        local Rarity = Component and Component:GetAttribute("Rarity") or "Common"
         local Color = Colors[Rarity] or Colors.Common
 
         Header.Text = IsDuplicate == true and "DUPLICATE" or "COMPONENT OBTAINED"
@@ -549,37 +577,30 @@ do
         NotificationId += 1
         local CurrentId = NotificationId
         Frame.Visible = true
-
         task.delay(NOTIFICATION_TIME, function()
             if NotificationId == CurrentId and Frame.Parent then Frame.Visible = false end
         end)
     end
 
-	local function RestoreOriginalGui()
-	    local Main, OriginalGui = OldMain, OldGui
+    local function RestoreOriginalGui()
+        local Main, OriginalGui = OldMain, OldGui
 
-	    if Main and Main.Parent then
-	        local RootFrame = Main.Parent
+        if Main and Main.Parent then
+            local RootFrame = Main.Parent
+            while RootFrame.Parent and RootFrame.Parent:IsA("GuiObject") do
+                RootFrame = RootFrame.Parent
+            end
+            if RootFrame:IsA("GuiObject") then
+                local Position = RootFrame.Position
+                RootFrame.Position = UDim2.new(Position.X.Scale, Position.X.Offset, -10000, 0)
+            end
+            Main.Disabled = OldMainDisabled
+        end
 
-	        while RootFrame.Parent and RootFrame.Parent:IsA("GuiObject") do
-	            RootFrame = RootFrame.Parent
-	        end
-
-	        if RootFrame:IsA("GuiObject") then
-	            local Position = RootFrame.Position
-	            RootFrame.Position = UDim2.new(Position.X.Scale, Position.X.Offset, -10000, 0)
-	        end
-
-	        Main.Disabled = OldMainDisabled
-	    end
-
-	    if OriginalGui and OriginalGui.Parent then
-	        OriginalGui.Enabled = OldGuiEnabled
-	    end
-
-	    OldMain, OldGui = nil, nil
-	    OldMainDisabled, OldGuiEnabled = nil, nil
-	end
+        if OriginalGui and OriginalGui.Parent then OriginalGui.Enabled = OldGuiEnabled end
+        OldMain, OldGui = nil, nil
+        OldMainDisabled, OldGuiEnabled = nil, nil
+    end
 
     local function CustomMenu(State)
         CustomEnabled = State == true
@@ -597,13 +618,10 @@ do
                 end)
             end)
 
-            if not RewardConnection then
-                RewardConnection = RewardEvent.OnClientEvent:Connect(Notify)
-            end
+            if not RewardConnection then RewardConnection = RewardEvent.OnClientEvent:Connect(Notify) end
         else
             NotificationId += 1
             Frame.Visible, Gui.Enabled = false, false
-
             Disconnect(RewardConnection)
             Disconnect(GuiAddedConnection)
             RewardConnection, GuiAddedConnection = nil, nil
@@ -619,9 +637,9 @@ do
     end
     Environment.CustomMenu = CustomMenu
 
-    toggleall.toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming", function(State) 
-		CustomMenu(State) 
-	end)
+    toggleall.toggl_custom_Stochastic_Blueprint_Remuneration = Section:NewToggle("custom : Stochastic Blueprint Remuneration", "Blueprints Auto-farming",function(State) 
+        CustomMenu(State) 
+    end)
 end
 
 
@@ -629,26 +647,18 @@ local Tab = Window:NewTab("Give")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
-do 
-	local watgiwe = nil
-	
-	Section:NewButton("give Flamethrower", "Подсказка", function()
-		watgiwe = workspace.Islands.CartDepot["The Cart Depot"]["Flamethrower giver"].ProxPart
-		if watgiwe then
-		    local seifcframe = HRP.CFrame
-		    task.wait(0.1)
-		    HRP.CFrame = watgiwe.CFrame * CFrame.new(0,0,5)
-		    task.wait(0.1)
-			for w = 1,2 do
-				fireproximityprompt(watgiwe.ProximityPrompt)
-				task.wait(0.1)
-			end
-		    task.wait(0)
-		    HRP.CFrame = seifcframe
-		else 
-			SISTEM_uvidomleniya("What", "BROO", 5, 113093122)
-		end
-	end)
+do
+    Section:NewButton("give Flamethrower", "Подсказка", function()
+        local Part = workspace.Islands.CartDepot["The Cart Depot"]["Flamethrower giver"].ProxPart
+        if not Part then SISTEM_uvidomleniya("What", "BROO", 5, 113093122); return end
+        local OldCFrame = HRP.CFrame
+        task.wait(0.1)
+        HRP.CFrame = Part.CFrame * CFrame.new(0, 0, 5)
+        task.wait(0.1)
+        for _ = 1, 2 do fireproximityprompt(Part.ProximityPrompt); task.wait(0.1) end
+        task.wait(0)
+        HRP.CFrame = OldCFrame
+    end)
 end
 
 Section:NewButton("give PowerLogic MD6707-1900", "FireServer MD6707-1900", function()
@@ -672,38 +682,37 @@ end)
 local Patch = Section:NewLabel("Patch")
 
 if HasBadge(1080576579746942) then
-    do
-        local vzyati = nil
+    local vzyati
 
-        Section:NewButton("Patch Flintlock", "Подсказка", function()
-            if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
-                BuyItem("Flintlock")
-                vzyati = false
-            end
-            if character and character:FindFirstChild("Flintlock") then
-                Humanoid:UnequipTools()
-                vzyati = true
-            end
+    Section:NewButton("Patch Flintlock", "Подсказка", function()
+        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+            BuyItem("Flintlock")
+            vzyati = false
+        end
 
-            task.wait(0.1)
-            local ToolEquipped = false
-            local Tool = Backpack:WaitForChild("Flintlock")
-            local Handle = Tool:WaitForChild("Handle")
-            local pewpew = Tool:WaitForChild("pewpew")
-            local function Equipped() ToolEquipped = true end
-            local function Unequipped() ToolEquipped = false end
-            if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
-            Tool:WaitForChild("LocalScript"):destroy()
-            local function fair()
-                if not ToolEquipped then return end
-                pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
-            end
-            Tool.Equipped:connect(Equipped)
-            Tool.Unequipped:connect(Unequipped)
-            Tool.Activated:Connect(fair)
-            if vzyati then Humanoid:EquipTool(Tool) end
+        if character and character:FindFirstChild("Flintlock") then
+            Humanoid:UnequipTools()
+            vzyati = true
+        end
+
+        task.wait(0.1)
+
+        local Tool = Backpack:WaitForChild("Flintlock")
+        local Handle, pewpew = Tool:WaitForChild("Handle"), Tool:WaitForChild("pewpew")
+        local ToolEquipped = false
+        local Script = Tool:FindFirstChild("LocalScript")
+
+        if not Script then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
+        Script:Destroy()
+
+        Tool.Equipped:Connect(function() ToolEquipped = true end)
+        Tool.Unequipped:Connect(function() ToolEquipped = false end)
+        Tool.Activated:Connect(function()
+            if ToolEquipped then pewpew:FireServer(Mouse.Hit.Position - Handle.Position) end
         end)
-    end
+
+        if vzyati then Humanoid:EquipTool(Tool) end
+    end)
 end
 
 do
@@ -1102,7 +1111,7 @@ do
     toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state) 
         staprr = state
         if state then   
-            toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22") ;kastom_setting_Patch_Zip(state)  
+            toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22") ;kastom_setting_Patch_Zip()  
         else    
             toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22"); defolt_setting_Patch_Zip()  
         end 
@@ -1130,6 +1139,7 @@ do
         Trail.BrickColor = color ;kastom_setting_Patch_Zip()    
     end)    
 end
+
 local Tab = Window:NewTab("control cart")
 
 local Section = Tab:NewSection("by CUCUMBER")
@@ -1138,53 +1148,39 @@ local carotoot = Section:NewLabel("sit in cart")
 
 do
     toggleall.toggl_to_drive_a_car_without_fuel = nil
-    local cart = nil
-    local cartCo = nil
-    local cartCh = nil
-    local cartWh = nil
-    local Cartnum = nil
-    local Cartspeed = nil
-    local fuelPercent = nil
-    local enabling = "off"
-    local txtcarotoot = "sit in cart"
-    local distansionka = false
-    local masinka_katasya = false
+
+    local cart, cartCo, cartCh, cartWh
+    local Cartnum, Cartspeed, fuelPercent
+    local enabling, txtcarotoot = "off", "sit in cart"
+    local distansionka, masinka_katasya = false, false
     local turning_force = 20
 
     local function allnil()
-        cart = nil
-        cartCo = nil
-        cartCh = nil
-        cartWh = nil
+        cart, cartCo, cartCh, cartWh = nil, nil, nil, nil
     end
 
     local function getcart()
         if not Humanoid or not Humanoid.Parent or not Humanoid.Sit then return nil end
-        local seat = Humanoid.SeatPart
-        local karr = seat and seat.Parent
-            and seat.Parent.Parent
-            and seat.Parent.Parent.Parent
 
-        if karr and karr.Name == "BasicCart" then
-            return karr
-        end
-        return nil
+        local seat = Humanoid.SeatPart
+        local karr = seat and seat.Parent and seat.Parent.Parent and seat.Parent.Parent.Parent
+        return karr and karr.Name == "BasicCart" and karr or nil
+    end
+
+    local function setCart(newCart)
+        allnil()
+        cart = newCart
+        cartCo, cartCh, cartWh = cart:FindFirstChild("Controls"), cart:FindFirstChild("Chasis"), cart:FindFirstChild("Wheels")
     end
 
     local function masinkaihati(speed, enable)
         if not masinka_katasya or not cart or not ENEIBLE then return end
+
         local vkl = enable == "on"
+        local Left, Right = cartWh.Left, cartWh.Right
 
-        local hinges = {
-            cartWh.Left:GetChildren()[2],
-            cartWh.Left.L,
-            cartWh.Right:GetChildren()[2],
-            cartWh.Right.R
-        }
-
-        for _, wheel in ipairs(hinges) do
+        for _, wheel in ipairs({Left:GetChildren()[2], Left.L, Right:GetChildren()[2], Right.R}) do
             local hinge = wheel.HingeConstraint
-
             hinge.ActuatorType = Enum.ActuatorType.Motor
             hinge.AngularVelocity = vkl and (wheel.Name == "L" and speed or -speed) or 0
             hinge.MotorMaxTorque = math.huge
@@ -1192,152 +1188,92 @@ do
     end
 
     local function updateCart()
-        if not cart then return end 
+        if not cart then return end
 
         local On = cartCo.On.BrickColor.Name
         Cartnum = cart.Chasis.Text.SurfaceGui.TextLabel.Text
         Cartspeed = cartCo.Speed.SurfaceGui.TextLabel.Text
+
         local fuel = cartCo.Fuel.SurfaceGui.Background
         fuelPercent = math.clamp(math.round(fuel.Size.Y.Scale * 100), 0, 100)
-        enabling = "on"
-        if On == "Bright red" then
-            enabling = "off"
-        end
-        txtcarotoot =
-            Cartnum
-            .. " / Speed : " .. Cartspeed
-            .. " / Fuel : " .. fuelPercent .. "%"
-            .. " / Enabling : " .. enabling
-         
+        enabling = On == "Bright red" and "off" or "on"
+
+        txtcarotoot = Cartnum .. " / Speed : " .. Cartspeed .. " / Fuel : " .. fuelPercent .. "% / Enabling : " .. enabling
         carotoot:UpdateLabel(txtcarotoot)
         masinkaihati(Cartspeed, enabling)
     end
-    
+
+    local function cartClick(Name)
+        if cartCo then FireCD:FireServer(cartCo[Name].ClickDetector.Clicked) end
+    end
+
+    local function turnCart(Direction)
+        if cartCo then cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0, turning_force * Direction, 0) end
+    end
+
+    local function flipCart()
+        local cartlip = cartCh.Engine
+
+        local pos = Instance.new("BodyPosition")
+        pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        pos.P, pos.D = 1e6, 1e4
+        pos.Position = cartlip.Position + Vector3.new(0, 5, 0)
+        pos.Parent = cartlip
+
+        local gyro = Instance.new("BodyGyro")
+        gyro.MaxTorque = Vector3.new(1e10, 1e10, 1e10)
+        gyro.P, gyro.D = 1e6, 2e4
+        gyro.CFrame = CFrame.new(cartlip.Position) * CFrame.Angles(0, math.rad(cartlip.Orientation.Y), 0)
+        gyro.Parent = cartlip
+
+        repeat task.wait() until cartlip.CFrame.UpVector.Y > 0.5 or not cartlip.Parent
+
+        pos:Destroy()
+        gyro:Destroy()
+    end
+
     toggleall.toggl_Cart_remote_control = Section:NewToggle("Cart: remote control", "remote control Cart", function(state)
         distansionka = state
-        if distansionka then
-            carotoot:UpdateLabel("Go to the cart and click hui")
-        end
+        if distansionka then carotoot:UpdateLabel("Go to the cart and click hui") end
     end)
 
     Section:NewSlider("turning force", "Подсказка", 50, 1, function(value)
         turning_force = value
     end)
 
-    Section:NewButton("Cart: Up", "Подсказка", function()
-        if cartCo  then
-            FireCD:FireServer(cartCo.Up.ClickDetector.Clicked)
-        end
-    end)
-
-    Section:NewButton("Cart: On/Off", "Подсказка", function()
-        if cartCo  then
-            FireCD:FireServer(cartCo.On.ClickDetector.Clicked)
-        end
-    end)
-
-    Section:NewButton("Cart: Down", "Подсказка", function()
-        if cartCo then
-            FireCD:FireServer(cartCo.Down.ClickDetector.Clicked)
-        end
-    end)
-
+    Section:NewButton("Cart: Up", "Подсказка", function() cartClick("Up") end)
+    Section:NewButton("Cart: On/Off", "Подсказка", function() cartClick("On") end)
+    Section:NewButton("Cart: Down", "Подсказка", function() cartClick("Down") end)
     Section:NewButton("Cart: Flip", "Подсказка", function()
-        if cartCh then
-            local cartlip = cartCh.Engine
-
-            local pos = Instance.new("BodyPosition")
-            pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-            pos.P = 1e6
-            pos.D = 1e4
-            pos.Position = cartlip.Position + Vector3.new(0, 5, 0)
-            pos.Parent = cartlip
-
-            local gyro = Instance.new("BodyGyro")
-            gyro.MaxTorque = Vector3.new(1e10, 1e10, 1e10)
-            gyro.P = 1e6
-            gyro.D = 2e4
-            gyro.CFrame = CFrame.new(cartlip.Position) * CFrame.Angles(0, math.rad(cartlip.Orientation.Y), 0)
-            gyro.Parent = cartlip
-
-            repeat
-                task.wait()
-            until cartlip.CFrame.UpVector.Y > 0.5 or not cartlip.Parent
-
-            pos:Destroy()
-            gyro:Destroy()
-        end
+        if cartCh then flipCart() end
     end)
-
-    Section:NewButton("Cart: left", "Подсказка", function()
-        if cartCo then
-            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,turning_force,0)
-        end
-    end)
-
-    Section:NewButton("Cart: right", "Подсказка", function()
-        if cartCo then
-            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,-turning_force,0)
-        end
-    end)
+    Section:NewButton("Cart: left", "Подсказка", function() turnCart(1) end)
+    Section:NewButton("Cart: right", "Подсказка", function() turnCart(-1) end)
 
     local bind = Section:NewLabel("bind")
 
     Section:NewKeybind("Cart: Up", "Подсказка", Enum.KeyCode.KeypadEight, function()
-        if cartCo and ENEIBLE then
-            FireCD:FireServer(cartCo.Up.ClickDetector.Clicked)
-        end
+        if cartCo and ENEIBLE then cartClick("Up") end
     end)
 
     Section:NewKeybind("Cart: On/Off", "Подсказка", Enum.KeyCode.KeypadFive, function()
-        if cartCo and ENEIBLE then
-            FireCD:FireServer(cartCo.On.ClickDetector.Clicked)
-        end
+        if cartCo and ENEIBLE then cartClick("On") end
     end)
 
     Section:NewKeybind("Cart: Down", "Подсказка", Enum.KeyCode.KeypadTwo, function()
-        if cartCo and ENEIBLE then
-            FireCD:FireServer(cartCo.Down.ClickDetector.Clicked)
-        end
+        if cartCo and ENEIBLE then cartClick("Down") end
     end)
 
     Section:NewKeybind("Cart: Flip", "Подсказка", Enum.KeyCode.KeypadOne, function()
-        if cartCh and ENEIBLE then
-            local cartlip = cartCh.Engine
-
-            local pos = Instance.new("BodyPosition")
-            pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-            pos.P = 1e6
-            pos.D = 1e4
-            pos.Position = cartlip.Position + Vector3.new(0, 5, 0)
-            pos.Parent = cartlip
-
-            local gyro = Instance.new("BodyGyro")
-            gyro.MaxTorque = Vector3.new(1e10, 1e10, 1e10)
-            gyro.P = 1e6
-            gyro.D = 2e4
-            gyro.CFrame = CFrame.new(cartlip.Position) * CFrame.Angles(0, math.rad(cartlip.Orientation.Y), 0)
-            gyro.Parent = cartlip
-
-            repeat
-                task.wait()
-            until cartlip.CFrame.UpVector.Y > 0.5 or not cartlip.Parent
-
-            pos:Destroy()
-            gyro:Destroy()
-        end
+        if cartCh and ENEIBLE then flipCart() end
     end)
 
     Section:NewKeybind("Cart: left", "Подсказка", Enum.KeyCode.KeypadFour, function()
-        if cartCo and ENEIBLE then
-            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,turning_force,0)
-        end
+        if cartCo and ENEIBLE then turnCart(1) end
     end)
 
     Section:NewKeybind("Cart: right", "Подсказка", Enum.KeyCode.KeypadSix, function()
-        if cartCo and ENEIBLE then
-            cart.Chasis.Engine.AssemblyAngularVelocity = Vector3.new(0,-turning_force,0)
-        end
+        if cartCo and ENEIBLE then turnCart(-1) end
     end)
 
     local masinka = Section:NewLabel("to drive a car without fuel")
@@ -1350,22 +1286,18 @@ do
     task.spawn(function()
         while ENEIBLE do
             task.wait(0.05)
-            if not distansionka then 
+
+            if not distansionka then
                 if not Humanoid.Sit then
                     if cart then
                         allnil()
                         carotoot:UpdateLabel("sit in cart")
-                    end 
+                    end
                 else
                     local newCart = getcart()
+
                     if newCart then
-                        if cart ~= newCart then
-                            allnil()
-                            cart = newCart
-                            cartCo = cart:FindFirstChild("Controls")
-                            cartCh =  cart:FindFirstChild("Chasis")
-                            cartWh =  cart:FindFirstChild("Wheels")   
-                        end
+                        if cart ~= newCart then setCart(newCart) end
                         updateCart()
                     elseif cart then
                         allnil()
@@ -1374,18 +1306,16 @@ do
                 end
             else
                 local newCart = getcart()
-                if newCart and cart ~= newCart then
-                    allnil()
-                    cart = newCart
-                    cartCo = cart:FindFirstChild("Controls")
-                    cartCh =  cart:FindFirstChild("Chasis")
-                    cartWh =  cart:FindFirstChild("Wheels") 
-                end
+                if newCart and cart ~= newCart then setCart(newCart) end
                 updateCart()
             end
         end
     end)
-    localPlayer.CharacterAdded:Connect(function() allnil() ;carotoot:UpdateLabel("sit in cart") end)
+
+    localPlayer.CharacterAdded:Connect(function()
+        allnil()
+        carotoot:UpdateLabel("sit in cart")
+    end)
 end
 
 local Tab = Window:NewTab("ADMIN ARBUZ")
@@ -1595,65 +1525,3 @@ local Section = Tab:NewSection("by CUCUMBER")
 Section:NewKeybind("Toggle UI", "open/close", Enum.KeyCode.N, function()
     Kavo:ToggleUI()
 end)
-
-do
-    ril_nem = nil
-
-    repeat
-        for _, obj in ipairs(CoreGui:GetDescendants()) do
-            if obj:IsA("TextLabel") and obj.Text:find("CRTSCC HUB", 1, true) then
-                local parent = obj.Parent
-
-                while parent and parent ~= CoreGui do
-                    if parent:IsA("ScreenGui") then
-                        ril_nem = parent
-                        print("GUI найден:", ril_nem:GetFullName())
-                        break
-                    end
-
-                    parent = parent.Parent
-                end
-
-                if ril_nem then
-                    break
-                end
-            end
-        end
-
-        if not ril_nem then
-            task.wait(0.05)
-        end
-    until ril_nem
-
-    local watchedGui = ril_nem
-    local destroyed = false
-
-    local function OnGuiDestroyed()
-        if destroyed then return end
-        destroyed = true
-
-        if ril_nem == watchedGui then
-            ril_nem = nil
-        end
-
-        ENEIBLE = false
-
-        for _, toggle in pairs(toggleall) do
-            pcall(function()
-                toggle:UpdateToggle(
-                    "If you see this message, your GUI is frozen. Reboot it.",
-                    false
-                )
-            end)
-        end
-        print("da blina 😭😭😭😭😭😭")
-    end
-
-    watchedGui.Destroying:Connect(OnGuiDestroyed)
-
-    watchedGui.AncestryChanged:Connect(function(_, parent)
-        if parent == nil then
-            OnGuiDestroyed()
-        end
-    end)
-end
