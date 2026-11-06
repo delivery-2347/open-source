@@ -195,10 +195,10 @@ end
 
 local function BuyItem(name, coin)
     if name and coin then
-        if getcoins() >= coin then
+        if getcoins() > coin then
         	BuyGun:FireServer(name)
         else
-        	SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS", 5, 119528748990662)
+        	SISTEM_uvidomleniya("you have an insufficient", "CANNY COINS <" .. coin, 5, 119528748990662)
         end	
     elseif name and not coin then
         BuyGun:FireServer(name)
@@ -672,104 +672,464 @@ end)
 local Patch = Section:NewLabel("Patch")
 
 if HasBadge(1080576579746942) then
-    Section:NewButton("Patch Flintlock", "Подсказка", function()
-        if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
-            BuyItem("Flintlock")
-        end
-        if character and character:FindFirstChild("Flintlock") then
-            Humanoid:UnequipTools()
+    do
+        local vzyati = nil
+
+        Section:NewButton("Patch Flintlock", "Подсказка", function()
+            if not Backpack:FindFirstChild("Flintlock") and not (character and character:FindFirstChild("Flintlock")) then
+                BuyItem("Flintlock")
+                vzyati = false
+            end
+            if character and character:FindFirstChild("Flintlock") then
+                Humanoid:UnequipTools()
+                vzyati = true
+            end
+
+            task.wait(0.1)
+            local ToolEquipped = false
+            local Tool = Backpack:WaitForChild("Flintlock")
+            local Handle = Tool:WaitForChild("Handle")
+            local pewpew = Tool:WaitForChild("pewpew")
+            local function Equipped() ToolEquipped = true end
+            local function Unequipped() ToolEquipped = false end
+            if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
+            Tool:WaitForChild("LocalScript"):destroy()
+            local function fair()
+                if not ToolEquipped then return end
+                pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
+            end
+            Tool.Equipped:connect(Equipped)
+            Tool.Unequipped:connect(Unequipped)
+            Tool.Activated:Connect(fair)
+            if vzyati then Humanoid:EquipTool(Tool) end
+        end)
+    end
+end
+
+do
+    local Players = game:GetService("Players")
+    local UIS = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local TweenService = game:GetService("TweenService")
+
+    local Player = Players.LocalPlayer
+    local PlayerScripts = Player:WaitForChild("PlayerScripts")
+    local Original = PlayerScripts:WaitForChild("Dragging")
+
+    local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+    local DragBegin = Remotes:WaitForChild("DragBegin")
+    local DragEnd = Remotes:WaitForChild("DragEnd")
+    local HighlightTemplates = ReplicatedStorage
+        :WaitForChild("Effects")
+        :WaitForChild("Highlights")
+
+    local Controls = require(Player.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
+
+    local MaxRayDistance = 1000000
+    local Mode = "Original"
+    local GrabBlocked = false
+
+    local Custom = {
+        Part = nil,
+        Position = nil,
+        Gyro = nil,
+        Connection = nil,
+        Distance = 0,
+        Offset = CFrame.new(),
+        Rotation = CFrame.new(),
+        Rotating = false,
+        Keys = {}
+    }
+
+    local function SetRotationMovement(Enabled)
+        Custom.Rotating = Enabled
+        if Enabled then Controls:Disable()
+        else Controls:Enable() end
+    end
+
+    local function CreateHighlight(Name, FillColor, OutlineColor)
+        local Template = HighlightTemplates:FindFirstChild(Name)
+        local Highlight
+
+        if Template and Template:IsA("Highlight") then
+            Highlight = Template:Clone()
+        else
+            Highlight = Instance.new("Highlight")
+            Highlight.FillColor = FillColor
+            Highlight.OutlineColor = OutlineColor
+            Highlight.FillTransparency = 0.85
+            Highlight.OutlineTransparency = 0
         end
 
-        task.wait(0.1)
-        local ToolEquipped = false
-        local Tool = Backpack:WaitForChild("Flintlock")
-        local Handle = Tool:WaitForChild("Handle")
-        local pewpew = Tool:WaitForChild("pewpew")
-        local function Equipped() ToolEquipped = true end
-        local function Unequipped() ToolEquipped = false end
-        if not Tool:FindFirstChild("LocalScript") then SISTEM_uvidomleniya("already modified", "Flintlock", 3, 28900020); return end
-        Tool:WaitForChild("LocalScript"):destroy()
-        local function fair()
-            if not ToolEquipped then return end
-            pewpew:FireServer(Mouse.Hit.Position - Tool.Handle.Position)
+        Highlight.Adornee = nil
+        Highlight.Enabled = true
+        Highlight.Parent = ReplicatedStorage
+        return Highlight
+    end
+
+    local MouseoverHighlight = CreateHighlight(
+        "Mouseover",
+        Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(255, 255, 255)
+    )
+
+    local DraggingHighlight = CreateHighlight(
+        "Dragging",
+        Color3.fromRGB(191, 206, 255),
+        Color3.fromRGB(191, 206, 255)
+    )
+
+    TweenService:Create(
+        DraggingHighlight,
+        TweenInfo.new(
+            5,
+            Enum.EasingStyle.Linear,
+            Enum.EasingDirection.In,
+            -1,
+            true
+        ),
+        {
+            FillTransparency = 0.9,
+            OutlineColor = Color3.fromRGB(191, 206, 255)
+        }
+    ):Play()
+
+    local function ClearHighlights()
+        MouseoverHighlight.Adornee = nil
+        DraggingHighlight.Adornee = nil
+    end
+
+    local RayParams = RaycastParams.new()
+    RayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    local function RefreshRaycastFilter()
+        local Ignore = {}
+        if Player.Character then table.insert(Ignore, Player.Character) end
+        for _, Name in ipairs({
+            "GrabIgnore",
+            "RaycastIgnore"
+        }) do
+            local Object = workspace:FindFirstChild(Name)
+            if Object then
+                table.insert(Ignore, Object)
+            end
         end
-        Tool.Equipped:connect(Equipped)
-        Tool.Unequipped:connect(Unequipped)
-        Tool.Activated:Connect(fair)
+        RayParams.FilterDescendantsInstances = Ignore
+    end
+
+    RefreshRaycastFilter()
+
+    Player.CharacterAdded:Connect(function()
+        task.wait()
+        RefreshRaycastFilter()
+    end)
+
+    local function GetMouseRay()
+        local Camera = workspace.CurrentCamera
+        local Mouse = UIS:GetMouseLocation()
+        return Camera:ViewportPointToRay(Mouse.X, Mouse.Y)
+    end
+
+    local function CanGrabPart(Part)
+        if not Part or not Part:IsA("BasePart") then return false end
+        if Part.Anchored or Part:HasTag("Ungrabbable") then return false end
+        if Part:HasTag("PlayerCharacter") then return false end
+
+        local ClickDetector = Part:FindFirstChildOfClass("ClickDetector")
+        if ClickDetector and ClickDetector.MaxActivationDistance > 0 then return false end
+
+        local Parent = Part.Parent
+
+        while Parent and Parent ~= workspace and Parent.ClassName ~= "Folder" do
+            local Humanoid = Parent:FindFirstChildOfClass("Humanoid")
+            if Humanoid and Humanoid.Health > 0 then return false end
+            Parent = Parent.Parent
+        end
+        for _, Connected in ipairs(Part:GetConnectedParts(true)) do
+            if Connected.Anchored then
+                return false
+            end
+        end
+        return true
+    end
+
+    local function StopCustom()
+        SetRotationMovement(false)
+        if Custom.Connection then
+            Custom.Connection:Disconnect()
+            Custom.Connection = nil
+        end
+
+        local Part = Custom.Part
+
+        if Custom.Position then
+            Custom.Position:Destroy()
+            Custom.Position = nil
+        end
+        if Custom.Gyro then
+            Custom.Gyro:Destroy()
+            Custom.Gyro = nil
+        end
+
+        if Part and Part.Parent then DragEnd:FireServer(Part) end
+
+        Custom.Part = nil
+        Custom.Keys = {}
+        Custom.Rotating = false
+        Custom.Rotation = CFrame.new()
+        DraggingHighlight.Adornee = nil
+    end
+
+    local function StartCustom()
+        if Mode ~= "Custom" then return false end
+        if Custom.Part then StopCustom() end
+
+        local Camera = workspace.CurrentCamera
+        local Ray = GetMouseRay()
+
+        local Result = workspace:Raycast(
+            Ray.Origin,
+            Ray.Direction * MaxRayDistance,
+            RayParams
+        )
+
+        if not Result then return false end
+
+        local Part = Result.Instance
+
+        if not CanGrabPart(Part) then return false end
+
+        local CameraRotation = Camera.CFrame - Camera.CFrame.Position
+        local Offset = Part.CFrame:ToObjectSpace(CFrame.new(Result.Position) * CameraRotation)
+        Custom.Offset = Offset:Inverse()
+        Custom.Distance = (Result.Position - Camera.CFrame.Position).Magnitude
+        Custom.Rotation = CFrame.new()
+        Custom.Part = Part
+
+        local BodyPosition = Instance.new("BodyPosition")
+        BodyPosition.MaxForce = Vector3.new(50000, 50000, 50000)
+        BodyPosition.P = 2500
+        BodyPosition.D = 200
+        BodyPosition.Position = Part.Position
+        BodyPosition.Parent = Part
+
+        local BodyGyro = Instance.new("BodyGyro")
+        BodyGyro.MaxTorque = Vector3.new(10000, 10000, 10000)
+        BodyGyro.P = 2500
+        BodyGyro.D = 100
+        BodyGyro.CFrame = Part.CFrame
+        BodyGyro.Parent = Part
+        Custom.Position = BodyPosition
+        Custom.Gyro = BodyGyro
+        MouseoverHighlight.Adornee = nil
+        DraggingHighlight.Adornee = Part
+
+        DragBegin:FireServer(Part)
+
+        Custom.Connection = RunService.Heartbeat:Connect(function(Delta)
+            if not Custom.Part or not Custom.Part.Parent then StopCustom(); return end
+
+            local CurrentCamera = workspace.CurrentCamera
+            if not CurrentCamera then StopCustom(); return end
+
+            local Ray = GetMouseRay()
+
+            local Target =
+                CurrentCamera.CFrame.Position
+                + Ray.Direction * Custom.Distance
+
+            if Custom.Rotating then
+                local Keys = Custom.Keys
+                local Rotation = Vector3.new(
+                    (Keys[Enum.KeyCode.S] and 1 or 0)
+                        - (Keys[Enum.KeyCode.W] and 1 or 0),
+
+                    (Keys[Enum.KeyCode.A] and 1 or 0)
+                        - (Keys[Enum.KeyCode.D] and 1 or 0),
+
+                    (Keys[Enum.KeyCode.Q] and 1 or 0)
+                        - (Keys[Enum.KeyCode.E] and 1 or 0)
+                ) * Delta * 1.2
+                Custom.Rotation =
+                    CFrame.Angles(0, Rotation.Y, 0)
+                    * CFrame.Angles(Rotation.X, 0, 0)
+                    * CFrame.Angles(0, 0, Rotation.Z)
+                    * Custom.Rotation
+            end
+
+            local CameraRotation =
+                CurrentCamera.CFrame - CurrentCamera.CFrame.Position
+
+            local TargetCFrame =
+                CFrame.new(Target)
+                * CameraRotation
+                * Custom.Rotation
+                * Custom.Offset
+
+            Custom.Position.Position = TargetCFrame.Position
+            Custom.Gyro.CFrame = TargetCFrame
+        end)
+        return true
+    end
+
+    local function UpdateHighlight()
+        if Mode ~= "Custom" then ClearHighlights(); return end
+        if Custom.Part then
+            MouseoverHighlight.Adornee = nil
+            DraggingHighlight.Adornee = Custom.Part
+            return
+        end
+
+        DraggingHighlight.Adornee = nil
+        local Ray = GetMouseRay()
+
+        local Result = workspace:Raycast(
+            Ray.Origin,
+            Ray.Direction * MaxRayDistance,
+            RayParams
+        )
+        if Result and CanGrabPart(Result.Instance) then
+            MouseoverHighlight.Adornee = Result.Instance
+        else
+            MouseoverHighlight.Adornee = nil
+        end
+    end
+
+    RunService.RenderStepped:Connect(UpdateHighlight)
+
+    local function castom_grab(Start)
+        if not Start then
+            GrabBlocked = true
+            StopCustom()
+            return true
+        end
+        return not GrabBlocked and StartCustom()
+    end
+
+    local function set_grab_mode(CustomMode)
+        if typeof(CustomMode) ~= "boolean" then return false end
+        StopCustom()
+        ClearHighlights()
+        Mode = "Switching"
+        if CustomMode then
+            local Drop = Original:FindFirstChild("Drop")
+
+            if Drop and Drop:IsA("BindableEvent") then
+                Drop:Fire()
+            end
+            RunService.Heartbeat:Wait()
+            Original.Disabled = true
+            Mode = "Custom"
+        else
+            Original.Disabled = false
+            Mode = "Original"
+        end
+        return true
+    end
+
+    UIS.InputBegan:Connect(function(Input, Processed)
+        if Mode ~= "Custom" or Processed then return end
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            GrabBlocked = false
+            castom_grab(true)
+            return
+        end
+        if Input.KeyCode == Enum.KeyCode.LeftShift then SetRotationMovement(true) end
+        Custom.Keys[Input.KeyCode] = true
+    end)
+
+    UIS.InputEnded:Connect(function(Input)
+        if Mode ~= "Custom" then return end
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            castom_grab(false)
+            return
+        end
+        if Input.KeyCode == Enum.KeyCode.LeftShift then SetRotationMovement(false) end
+        Custom.Keys[Input.KeyCode] = false
+    end)
+
+    
+    toglall.Patch_grab = Section:NewToggle("Patch grab", "Подсказка",function(start)
+        set_grab_mode(start)
     end)
 end
 
-local Trail, sikillyaamo = {}, false
-Trail.BrickColor = "Lime green" 
-Trail.line_width = 0.13 
-Trail.seconds = 1   
-Trail.Velocity = 0  
-Trail.Range = 500   
+do
+    local Trail, sikillyaamo, staprr = {}, false, false
+    toggleall.Patch_Zip_22 = nil
+    Trail.BrickColor = "Lime green" 
+    Trail.line_width = 0.13 
+    Trail.seconds = 1   
+    Trail.Velocity = 0  
+    Trail.Range = 500   
 
-local function kastom_setting_Patch_Zip()   
-    sikillyaamo = true  
-    local Stats = require(game:GetService("ReplicatedStorage").Stats)   
-    local Zip22 = Stats.Ranged["Zip 22"]    
-    Zip22.MaxAmmo = 0/0 
-    task.spawn(function() while sikillyaamo do task.wait(0.1); Zip22.Ammo = 0/0 end end) 
-    Zip22.EquipTime = 0 
-    Zip22.Firerate = 0  
-    Zip22.ReloadTime = 0    
-    Zip22.KnockBack = 0 
-    Zip22.Accuracy = 0  
-    Zip22.Velocity = Trail.Velocity 
-    Zip22.Range = Trail.Range   
-    Zip22.Recoil = {Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), 0}  
-    Zip22.Trail = {BrickColor.new(Trail.BrickColor), Trail.line_width, false, Trail.line_width, Trail.seconds}  
-end 
-
-local function defolt_setting_Patch_Zip()  
-    sikillyaamo = false
-    local Stats = require(game:GetService("ReplicatedStorage").Stats)       
-    local Zip22 = Stats.Ranged["Zip 22"]   
-    Zip22.MaxAmmo = 10 
-    Zip22.Ammo = 10
-    Zip22.EquipTime = 0.25
-    Zip22.Firerate = 0.25
-    Zip22.ReloadTime = 3.1
-    Zip22.KnockBack = 5
-    Zip22.Accuracy = 10
-    Zip22.Velocity = 100
-    Zip22.Range = 200  
-    Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,} 
-    Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}   
-end 
-
-toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state) 
-    if state then   
-        toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22", state) ;kastom_setting_Patch_Zip()    
-    else    
-        toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22", state) ;defolt_setting_Patch_Zip()  
+    local function kastom_setting_Patch_Zip()
+        if not staprr then return end
+        sikillyaamo = true  
+        local Stats = require(game:GetService("ReplicatedStorage").Stats)   
+        local Zip22 = Stats.Ranged["Zip 22"]    
+        Zip22.MaxAmmo = 0/0 
+        task.spawn(function() while sikillyaamo do task.wait(0.1); Zip22.Ammo = 0/0 end end) 
+        Zip22.EquipTime = 0 
+        Zip22.Firerate = 0  
+        Zip22.ReloadTime = 0    
+        Zip22.KnockBack = 0 
+        Zip22.Accuracy = 0  
+        Zip22.Velocity = Trail.Velocity 
+        Zip22.Range = Trail.Range   
+        Zip22.Recoil = {Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), 0}  
+        Zip22.Trail = {BrickColor.new(Trail.BrickColor), Trail.line_width, false, Trail.line_width, Trail.seconds}  
     end 
-end)    
 
-local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")   
+    local function defolt_setting_Patch_Zip()
+        sikillyaamo = false
+        local Stats = require(game:GetService("ReplicatedStorage").Stats)       
+        local Zip22 = Stats.Ranged["Zip 22"]   
+        Zip22.MaxAmmo = 10 
+        Zip22.Ammo = 10
+        Zip22.EquipTime = 0.25
+        Zip22.Firerate = 0.25
+        Zip22.ReloadTime = 3.1
+        Zip22.KnockBack = 5
+        Zip22.Accuracy = 10
+        Zip22.Velocity = 100
+        Zip22.Range = 200  
+        Zip22.Recoil = {Vector3.new(0.10000000149011612, 0, 0), Vector3.new(0.12999999523162842, 0, 0), 0.95,} 
+        Zip22.Trail = {BrickColor.new("Curry"), 0.13, true, 0.13, 5}   
+    end 
 
-line_width = Section:NewSlider("Line width", "Подсказка", 20, 0, function(value)    
-    Trail.line_width = value / 21 ;kastom_setting_Patch_Zip()   
-end)    
+    toggleall.Patch_Zip_22 = Section:NewToggle("Patch Zip 22", "Подсказка", function(state) 
+        staprr = state
+        if state then   
+            toggleall.Patch_Zip_22:UpdateToggle("UNPatch Zip 22") ;kastom_setting_Patch_Zip(state)  
+        else    
+            toggleall.Patch_Zip_22:UpdateToggle("Patch Zip 22"); defolt_setting_Patch_Zip()  
+        end 
+    end)    
 
-seconds = Section:NewSlider("Seconds existence in\nthe world of the line", "Подсказка", 5, 0, function(value)   
-    Trail.seconds = value ;kastom_setting_Patch_Zip()   
-end)    
-    
-Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)    
-    Trail.Velocity = value ;kastom_setting_Patch_Zip()  
-end)    
+    local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")   
 
-Range = Section:NewSlider("Maximum\nline distance", "Подсказка", 500, 100, function(value)  
-    Trail.Range = value ;kastom_setting_Patch_Zip() 
-end)    
+    line_width = Section:NewSlider("Line width", "Подсказка", 20, 0, function(value)    
+        Trail.line_width = value / 21 ;kastom_setting_Patch_Zip()   
+    end)    
 
-Section:NewColorPicker("Color line", "Подсказка", Color3.fromRGB(255, 0, 0), function(color)    
-    Trail.BrickColor = color ;kastom_setting_Patch_Zip()    
-end)    
+    seconds = Section:NewSlider("Seconds existence in\nthe world of the line", "Подсказка", 10, 0, function(value)   
+        Trail.seconds = value ;kastom_setting_Patch_Zip()   
+    end)    
 
+    Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)    
+        Trail.Velocity = value ;kastom_setting_Patch_Zip()  
+    end)    
+
+    Range = Section:NewSlider("Maximum\nline distance", "Подсказка", 500, 100, function(value)  
+        Trail.Range = value ;kastom_setting_Patch_Zip() 
+    end)    
+
+    Section:NewColorPicker("Color line", "Подсказка", Color3.fromRGB(255, 0, 0), function(color)    
+        Trail.BrickColor = color ;kastom_setting_Patch_Zip()    
+    end)    
+end
 local Tab = Window:NewTab("control cart")
 
 local Section = Tab:NewSection("by CUCUMBER")
@@ -1286,8 +1646,6 @@ do
                 )
             end)
         end
-
-        defolt_setting_Patch_Zip()
         print("da blina 😭😭😭😭😭😭")
     end
 
