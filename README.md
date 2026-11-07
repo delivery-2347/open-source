@@ -92,7 +92,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/open-so
 
 ### Game Icon
 
-[![Evade](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtmPi9yxzJ7hRO7uQj9LX0cVrhlX6EvYGHhaHzjON6A&s=10)](https://www.roblox.com/games/9872472334/Evade)
+[![Evade](https://tr.rbxcdn.com/180DAY-a404c59a18fb6b6e3c8ff7d6c423cf50/768/432/Image/Webp/noFilter)](https://www.roblox.com/games/9872472334/Evade)
 
 ### Loader
 
