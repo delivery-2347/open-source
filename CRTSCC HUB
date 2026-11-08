@@ -643,7 +643,7 @@ do
 end
 
 
-local Tab = Window:NewTab("Give")
+local Tab = Window:NewTab("Give/Patch")
 
 local Section = Tab:NewSection("by CUCUMBER")
 
@@ -716,6 +716,8 @@ if HasBadge(1080576579746942) then
 end
 
 do
+    local Setting_Patch_Zip_22 = Section:NewLabel("Patch grab/Setting")   
+    
     local Players = game:GetService("Players")
     local UIS = game:GetService("UserInputService")
     local RunService = game:GetService("RunService")
@@ -736,6 +738,7 @@ do
     local Controls = require(Player.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
 
     local MaxRayDistance = 1000000
+    local rastyag = 5
     local Mode = "Original"
     local GrabBlocked = false
 
@@ -1058,13 +1061,49 @@ do
         Custom.Keys[Input.KeyCode] = false
     end)
 
+    local function approximations(stud)
+        if not Custom.Part or typeof(stud) ~= "number"
+            or stud <= 0 or stud ~= stud or stud == math.huge then
+            return false
+        end
+    
+        Custom.Distance = math.max(1, Custom.Distance - stud)
+        return true
+    end
+    
+    local function remoteness(stud)
+        if not Custom.Part or typeof(stud) ~= "number"
+            or stud <= 0 or stud ~= stud or stud == math.huge then
+            return false
+        end
+    
+        Custom.Distance = math.min(MaxRayDistance, Custom.Distance + stud)
+        return true
+    end
     
     toggleall.Patch_grab = Section:NewToggle("Patch grab", "Подсказка",function(start)
         set_grab_mode(start)
     end)
+
+    Section:NewSlider("distances", "Подсказка", 50, 1, function(value)
+        rastyag = value
+    end)
+
+    Section:NewKeybind("approximations", "Подсказка", Enum.KeyCode.C, function()
+        if ENEIBLE and toggleall.Patch_grab:GetValue() then
+            approximations(rastyag)
+        end
+    end)
+    
+    Section:NewKeybind("remoteness", "Подсказка", Enum.KeyCode.X, function()
+        if ENEIBLE and toggleall.Patch_grab:GetValue() then
+            remoteness(rastyag)
+        end
+    end)
 end
 
 do
+    local Setting_Patch_Zip_22 = Section:NewLabel("Patch Zip 22/Setting")   
     local Trail, sikillyaamo, staprr = {}, false, false
     toggleall.Patch_Zip_22 = nil
     Trail.BrickColor = "Lime green" 
@@ -1076,7 +1115,7 @@ do
     local function kastom_setting_Patch_Zip()
         if not staprr then return end
         sikillyaamo = true  
-        local Stats = require(game:GetService("ReplicatedStorage").Stats)   
+        local Stats = require(game:GetService("ReplicatedStorage"):WaitForChild("Stats"))
         local Zip22 = Stats.Ranged["Zip 22"]    
         Zip22.MaxAmmo = 0/0 
         task.spawn(function() while sikillyaamo do task.wait(0.1); Zip22.Ammo = 0/0 end end) 
@@ -1093,7 +1132,7 @@ do
 
     local function defolt_setting_Patch_Zip()
         sikillyaamo = false
-        local Stats = require(game:GetService("ReplicatedStorage").Stats)       
+        local Stats = require(game:GetService("ReplicatedStorage"):WaitForChild("Stats"))   
         local Zip22 = Stats.Ranged["Zip 22"]   
         Zip22.MaxAmmo = 10 
         Zip22.Ammo = 10
@@ -1117,8 +1156,6 @@ do
         end 
     end)    
 
-    local Setting_Patch_Zip_22 = Section:NewLabel("Setting Patch Zip 22")   
-
     line_width = Section:NewSlider("Line width", "Подсказка", 20, 0, function(value)    
         Trail.line_width = value / 21 ;kastom_setting_Patch_Zip()   
     end)    
@@ -1127,7 +1164,7 @@ do
         Trail.seconds = value ;kastom_setting_Patch_Zip()   
     end)    
 
-    Velocity = Section:NewSlider("Velocity line", "Подсказка", 5, 0, function(value)    
+    Velocity = Section:NewSlider("Velocity line", "Подсказка", 100, 0, function(value)    
         Trail.Velocity = value ;kastom_setting_Patch_Zip()  
     end)    
 
@@ -1244,9 +1281,7 @@ do
     Section:NewButton("Cart: Up", "Подсказка", function() cartClick("Up") end)
     Section:NewButton("Cart: On/Off", "Подсказка", function() cartClick("On") end)
     Section:NewButton("Cart: Down", "Подсказка", function() cartClick("Down") end)
-    Section:NewButton("Cart: Flip", "Подсказка", function()
-        if cartCh then flipCart() end
-    end)
+    Section:NewButton("Cart: Flip", "Подсказка", function() if cartCh then flipCart() end end)
     Section:NewButton("Cart: left", "Подсказка", function() turnCart(1) end)
     Section:NewButton("Cart: right", "Подсказка", function() turnCart(-1) end)
 
