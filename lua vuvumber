@@ -1,4 +1,4 @@
--- lua by cucumber 
+-- lua by cucumber
 --[[ cucumber cfg
 
 {"animate_brand":true,"jump_ring_image":"rbxassetid://92880046539048","bullet_texture":"rbxassetid://92880046539048","always_apply_jump_rings":true,"branding_image":"rbxassetid://92880046539048","always_apply_bullets":true,"version":1,"always_apply_branding_image":true,"animate_user":true,"user_text":"cucumber","brand_text":"cucumber","animation_interval_ms":100}
@@ -6,6 +6,7 @@
 ]]
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
+
 local function find_watermark_label(kind)
     local playerGui = localPlayer and localPlayer:FindFirstChild("PlayerGui")
     local watermark = playerGui and playerGui:FindFirstChild("SynWatermark")
@@ -19,6 +20,7 @@ local function find_watermark_label(kind)
     local badge = frame:FindFirstChild("BrandBadge")
     return badge and badge:FindFirstChild("BrandLabel") or nil
 end
+
 local function read_label(kind)
     local label = find_watermark_label(kind)
     if not label then
@@ -29,6 +31,7 @@ local function read_label(kind)
     end)
     return ok and tostring(value or "") or ""
 end
+
 local original_text = {
     user = read_label("user"),
     brand = read_label("brand"),
@@ -37,6 +40,7 @@ local animation_state = {
     user = { enabled = false, token = 0 },
     brand = { enabled = false, token = 0 },
 }
+
 local function set_label(kind, value)
     value = tostring(value or "")
     local label = find_watermark_label(kind)
@@ -48,6 +52,7 @@ local function set_label(kind, value)
     end)
     return ok
 end
+
 local function NormalizeIcon(iconId)
     if iconId == nil or tostring(iconId) == "" then
         return nil
@@ -71,6 +76,7 @@ local function NormalizeIcon(iconId)
     end
     return "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150"
 end
+
 local DEFAULT_BULLET_HOLE_TEXTURE = "rbxassetid://78546082618660"
 local DEFAULT_BRANDING_IMAGE = ""
 local bullet_texture_input
@@ -85,7 +91,6 @@ local bullet_texture_state = {
     descendant_connection = nil,
     workspace_connection = nil,
 }
-local original_bullet_textures = {}
 local branding_image_state = {
     enabled = false,
     image = nil,
@@ -104,46 +109,65 @@ local jump_ring_image_state = {
     descendant_connection = nil,
     workspace_connection = nil,
 }
-local function remember_and_set_hole_decal(decal, normalized)
-    local read_ok, current = pcall(function()
-        return decal.Texture
-    end)
-    if not read_ok then
-        return false
-    end
-    if original_bullet_textures[decal] == nil then
-        original_bullet_textures[decal] = current
-    end
-    if current == normalized then
-        return true
-    end
-    local write_ok = pcall(function()
-        decal.Texture = normalized
-    end)
-    return write_ok
-end
-local function apply_to_bullet_hole(instance, folder, normalized)
-    if not instance or not folder or not normalized then
-        return false
-    end
+local bullet_hole_images = {}
+
+local function find_bullet_hole(instance, folder)
     local current = instance
-    local hole
     while current and current ~= folder do
         if current.Name == "BulletHole" then
-            hole = current
-            break
+            return current
         end
         current = current.Parent
     end
-    if not hole then
-        return false
-    end
-    local decal = hole:FindFirstChild("HoleDecal")
-    if not decal then
-        return false
-    end
-    return remember_and_set_hole_decal(decal, normalized)
+    return nil
 end
+
+local function find_bullet_hole_part(hole)
+    if hole:IsA("BasePart") then
+        return hole
+    end
+    return hole:FindFirstChildWhichIsA("BasePart", true)
+end
+
+local function apply_to_bullet_hole(hole, normalized)
+    if not hole or not normalized then
+        return false
+    end
+
+    local record = bullet_hole_images[hole]
+    if not record then
+        local part = find_bullet_hole_part(hole)
+        if not part then
+            return false
+        end
+
+        local surface = Instance.new("SurfaceGui")
+        surface.Name = "CucumberBulletHoleSurface"
+        surface.Adornee = part
+        surface.Face = Enum.NormalId.Front
+        surface.AlwaysOnTop = false
+        surface.LightInfluence = 0
+        surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+        surface.PixelsPerStud = 100
+        surface.Parent = hole
+
+        local image = Instance.new("ImageLabel")
+        image.Name = "BulletHoleImage"
+        image.BackgroundTransparency = 1
+        image.Size = UDim2.fromScale(1, 1)
+        image.Position = UDim2.fromScale(0, 0)
+        image.ScaleType = Enum.ScaleType.Stretch
+        image.Image = normalized
+        image.Parent = surface
+
+        record = { surface = surface, image = image }
+        bullet_hole_images[hole] = record
+    else
+        record.image.Image = normalized
+    end
+    return true
+end
+
 local function apply_to_existing_bullet_holes(folder, normalized)
     if not folder or not normalized then
         return 0
@@ -154,14 +178,21 @@ local function apply_to_existing_bullet_holes(folder, normalized)
     if not ok then
         return 0
     end
+
     local applied = 0
+    local seen = {}
     for _, descendant in ipairs(descendants) do
-        if descendant.Name == "BulletHole" and apply_to_bullet_hole(descendant, folder, normalized) then
-            applied += 1
+        local hole = find_bullet_hole(descendant, folder)
+        if hole and not seen[hole] then
+            seen[hole] = true
+            if apply_to_bullet_hole(hole, normalized) then
+                applied += 1
+            end
         end
     end
     return applied
 end
+
 local function disconnect_connection(connection)
     if connection then
         pcall(function()
@@ -169,6 +200,7 @@ local function disconnect_connection(connection)
         end)
     end
 end
+
 local function stop_bullet_hole_watch()
     disconnect_connection(bullet_texture_state.descendant_connection)
     disconnect_connection(bullet_texture_state.workspace_connection)
@@ -176,6 +208,7 @@ local function stop_bullet_hole_watch()
     bullet_texture_state.workspace_connection = nil
     bullet_texture_state.folder = nil
 end
+
 local function watch_bullet_hole_folder(folder)
     if not folder or bullet_texture_state.folder == folder then
         return
@@ -185,10 +218,14 @@ local function watch_bullet_hole_folder(folder)
     apply_to_existing_bullet_holes(folder, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
     bullet_texture_state.descendant_connection = folder.DescendantAdded:Connect(function(descendant)
         if bullet_texture_state.enabled then
-            apply_to_bullet_hole(descendant, folder, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
+            local hole = find_bullet_hole(descendant, folder)
+            if hole then
+                apply_to_bullet_hole(hole, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
+            end
         end
     end)
 end
+
 local function set_bullet_hole_texture(value)
     local normalized = NormalizeIcon(value)
     if not normalized then
@@ -203,6 +240,7 @@ local function set_bullet_hole_texture(value)
     end
     return false
 end
+
 local function set_always_apply_bullet_holes(enabled)
     if enabled == nil and always_apply_bullets then
         enabled = always_apply_bullets:get()
@@ -221,6 +259,7 @@ local function set_always_apply_bullet_holes(enabled)
         end
         return
     end
+
     bullet_texture_state.texture = NormalizeIcon(bullet_texture_input:get()) or DEFAULT_BULLET_HOLE_TEXTURE
     local folder = workspace:FindFirstChild("BulletHoles")
     if folder then
@@ -237,15 +276,18 @@ local function set_always_apply_bullet_holes(enabled)
         end
     end)
 end
-local function restore_original_bullet_textures()
-    local originals = original_bullet_textures
-    original_bullet_textures = {}
-    for decal, texture in pairs(originals) do
+
+local function cleanup_bullet_hole_images()
+    for hole, record in pairs(bullet_hole_images) do
         pcall(function()
-            decal.Texture = texture
+            if record.surface then
+                record.surface:Destroy()
+            end
         end)
+        bullet_hole_images[hole] = nil
     end
 end
+
 local function apply_to_jump_ring(ring, normalized)
     if not ring or ring.Name ~= "JumpRing" or not normalized then
         return false
@@ -402,6 +444,7 @@ local function set_always_apply_jump_rings(enabled)
         end
     end)
 end
+
 local function find_synui_branding_image()
     local player_gui = localPlayer and localPlayer:FindFirstChild("PlayerGui")
     local synui = player_gui and player_gui:FindFirstChild("SynUI_Window")
@@ -409,6 +452,7 @@ local function find_synui_branding_image()
     local sidebar = main_window and main_window:FindFirstChild("Sidebar")
     return sidebar and sidebar:FindFirstChild("BrandingLayer_A") or nil
 end
+
 local function write_synui_branding_image(value)
     local normalized = NormalizeIcon(value)
     local image_value = normalized or DEFAULT_BRANDING_IMAGE
@@ -427,11 +471,13 @@ local function write_synui_branding_image(value)
         image_object.Image = image_value
     end)
 end
+
 local function apply_synui_branding_image(value)
     branding_image_state.image = NormalizeIcon(value)
     local image_value = branding_image_state.enabled and branding_image_state.image or DEFAULT_BRANDING_IMAGE
     return write_synui_branding_image(image_value)
 end
+
 local function set_always_apply_branding_image(enabled)
     if enabled == nil and always_apply_branding_image then
         enabled = always_apply_branding_image:get()
@@ -451,6 +497,7 @@ local function set_always_apply_branding_image(enabled)
         write_synui_branding_image(branding_image_state.image)
     end
 end
+
 local function restore_original_branding_image()
     if not has_original_branding_image then
         return
@@ -462,10 +509,11 @@ local function restore_original_branding_image()
         end)
     end
 end
+
 local tab = menu.new_tab("VUVUMBER", "rbxassetid://92880046539048")
 local labels_section = tab:new_section("Watermark Labels", "Left")
 local animation_section = tab:new_section("Typing Animation", "Left")
-local bullet_hole_section = tab:new_section("Bullet Hole Texture", "Right")
+local bullet_hole_section = tab:new_section("Bullet Hole Image", "Right")
 local jump_ring_section = tab:new_section("JumpRing Image", "Right")
 local branding_section = tab:new_section("script icon", "Right")
 local actions_section = tab:new_section("Actions", "Right")
@@ -556,7 +604,7 @@ user_input = labels_section:new_textbox(
 )
 
 bullet_texture_input = bullet_hole_section:new_textbox(
-    "Texture ID",
+    "Image ID",
     "Asset ID or image URL...",
     "rbxassetid://92880046539048",
     function(value)
@@ -608,6 +656,7 @@ end)
 brand_animation = animation_section:new_toggle("Animate brand label", false, function(value)
     set_animation_state("brand", value)
 end)
+
 local function restore_original_labels()
     set_animation_state("user", false)
     set_animation_state("brand", false)
@@ -717,7 +766,7 @@ local function export_config_json()
         config_notice("Could not create JSON.")
         return
     end
-    
+
     json_config_input:set(serialized, true)
     local copied = false
     pcall(function()
@@ -902,6 +951,6 @@ client.set_event_callback("shutdown", function()
     close_save_confirmation()
     set_label("user", original_text.user)
     set_label("brand", original_text.brand)
-    restore_original_bullet_textures()
+    cleanup_bullet_hole_images()
     restore_original_branding_image()
 end)
