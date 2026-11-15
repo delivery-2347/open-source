@@ -937,8 +937,28 @@ json_section:new_button("Copy JSON", export_config_json)
 
 json_section:new_button("Load from JSON", load_config_json)
 config_notice("JSON persists")
-if cfg then
-    json.parse(tostring(cfg))
+if cfg ~= nil then
+    local config = cfg
+    if type(cfg) == "string" then
+        local parse_ok, parsed = pcall(function()
+            return json.parse(cfg)
+        end)
+        if not parse_ok then
+            config_notice("Invalid startup config JSON.")
+            config = nil
+        else
+            config = parsed
+        end
+    end
+
+    if config ~= nil then
+        local apply_ok, applied = pcall(apply_config, config)
+        if not apply_ok or not applied then
+            config_notice("Invalid startup config.")
+        else
+            config_notice("Startup config loaded.")
+        end
+    end
 end
 client.set_event_callback("shutdown", function()
     animation_state.user.enabled = false
