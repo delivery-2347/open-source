@@ -1,0 +1,907 @@
+-- lua by cucumber 
+--[[ cucumber cfg
+
+{"animate_brand":true,"jump_ring_image":"rbxassetid://92880046539048","bullet_texture":"rbxassetid://92880046539048","always_apply_jump_rings":true,"branding_image":"rbxassetid://92880046539048","always_apply_bullets":true,"version":1,"always_apply_branding_image":true,"animate_user":true,"user_text":"cucumber","brand_text":"cucumber","animation_interval_ms":100}
+
+]]
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local function find_watermark_label(kind)
+    local playerGui = localPlayer and localPlayer:FindFirstChild("PlayerGui")
+    local watermark = playerGui and playerGui:FindFirstChild("SynWatermark")
+    local frame = watermark and watermark:FindFirstChild("WatermarkFrame")
+    if not frame then
+        return nil
+    end
+    if kind == "user" then
+        return frame:FindFirstChild("UserLabel")
+    end
+    local badge = frame:FindFirstChild("BrandBadge")
+    return badge and badge:FindFirstChild("BrandLabel") or nil
+end
+local function read_label(kind)
+    local label = find_watermark_label(kind)
+    if not label then
+        return ""
+    end
+    local ok, value = pcall(function()
+        return label.Text
+    end)
+    return ok and tostring(value or "") or ""
+end
+local original_text = {
+    user = read_label("user"),
+    brand = read_label("brand"),
+}
+local animation_state = {
+    user = { enabled = false, token = 0 },
+    brand = { enabled = false, token = 0 },
+}
+local function set_label(kind, value)
+    value = tostring(value or "")
+    local label = find_watermark_label(kind)
+    if not label then
+        return false
+    end
+    local ok = pcall(function()
+        label.Text = value
+    end)
+    return ok
+end
+local function NormalizeIcon(iconId)
+    if iconId == nil or tostring(iconId) == "" then
+        return nil
+    end
+    local icon = tostring(iconId):match("^%s*(.-)%s*$")
+    if icon == "" then
+        return nil
+    end
+    if icon:match("^rbxthumb://") then
+        return icon
+    end
+    local id = icon:match("^rbxassetid://(%d+)$")
+        or icon:match("^assetid://(%d+)$")
+        or icon:match("^%s*(%d+)%s*$")
+        or icon:match("[?&]id=(%d+)")
+    if not id then
+        return icon
+    end
+    if icon:match("^rbxassetid://") or icon:match("^assetid://") then
+        return "rbxassetid://" .. id
+    end
+    return "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150"
+end
+local DEFAULT_BULLET_HOLE_TEXTURE = "rbxassetid://78546082618660"
+local DEFAULT_BRANDING_IMAGE = ""
+local bullet_texture_input
+local always_apply_bullets
+local branding_image_input
+local always_apply_branding_image
+local bullet_texture_state = {
+    enabled = false,
+    texture = nil,
+    token = 0,
+    folder = nil,
+    descendant_connection = nil,
+    workspace_connection = nil,
+}
+local original_bullet_textures = {}
+local branding_image_state = {
+    enabled = false,
+    image = nil,
+    token = 0,
+}
+local original_branding_image
+local has_original_branding_image = false
+local jump_ring_image_input
+local always_apply_jump_rings
+local DEFAULT_JUMP_RING_IMAGE = "rbxassetid://92880046539048"
+local jump_ring_image_state = {
+    enabled = false,
+    image = nil,
+    token = 0,
+    folder = nil,
+    descendant_connection = nil,
+    workspace_connection = nil,
+}
+local function remember_and_set_hole_decal(decal, normalized)
+    local read_ok, current = pcall(function()
+        return decal.Texture
+    end)
+    if not read_ok then
+        return false
+    end
+    if original_bullet_textures[decal] == nil then
+        original_bullet_textures[decal] = current
+    end
+    if current == normalized then
+        return true
+    end
+    local write_ok = pcall(function()
+        decal.Texture = normalized
+    end)
+    return write_ok
+end
+local function apply_to_bullet_hole(instance, folder, normalized)
+    if not instance or not folder or not normalized then
+        return false
+    end
+    local current = instance
+    local hole
+    while current and current ~= folder do
+        if current.Name == "BulletHole" then
+            hole = current
+            break
+        end
+        current = current.Parent
+    end
+    if not hole then
+        return false
+    end
+    local decal = hole:FindFirstChild("HoleDecal")
+    if not decal then
+        return false
+    end
+    return remember_and_set_hole_decal(decal, normalized)
+end
+local function apply_to_existing_bullet_holes(folder, normalized)
+    if not folder or not normalized then
+        return 0
+    end
+    local ok, descendants = pcall(function()
+        return folder:GetDescendants()
+    end)
+    if not ok then
+        return 0
+    end
+    local applied = 0
+    for _, descendant in ipairs(descendants) do
+        if descendant.Name == "BulletHole" and apply_to_bullet_hole(descendant, folder, normalized) then
+            applied += 1
+        end
+    end
+    return applied
+end
+local function disconnect_connection(connection)
+    if connection then
+        pcall(function()
+            connection:Disconnect()
+        end)
+    end
+end
+local function stop_bullet_hole_watch()
+    disconnect_connection(bullet_texture_state.descendant_connection)
+    disconnect_connection(bullet_texture_state.workspace_connection)
+    bullet_texture_state.descendant_connection = nil
+    bullet_texture_state.workspace_connection = nil
+    bullet_texture_state.folder = nil
+end
+local function watch_bullet_hole_folder(folder)
+    if not folder or bullet_texture_state.folder == folder then
+        return
+    end
+    disconnect_connection(bullet_texture_state.descendant_connection)
+    bullet_texture_state.folder = folder
+    apply_to_existing_bullet_holes(folder, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
+    bullet_texture_state.descendant_connection = folder.DescendantAdded:Connect(function(descendant)
+        if bullet_texture_state.enabled then
+            apply_to_bullet_hole(descendant, folder, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
+        end
+    end)
+end
+local function set_bullet_hole_texture(value)
+    local normalized = NormalizeIcon(value)
+    if not normalized then
+        return false
+    end
+    bullet_texture_state.texture = normalized
+    local folder = bullet_texture_state.folder or workspace:FindFirstChild("BulletHoles")
+    if folder then
+        local texture = bullet_texture_state.enabled and normalized or DEFAULT_BULLET_HOLE_TEXTURE
+        apply_to_existing_bullet_holes(folder, texture)
+        return true
+    end
+    return false
+end
+local function set_always_apply_bullet_holes(enabled)
+    if enabled == nil and always_apply_bullets then
+        enabled = always_apply_bullets:get()
+    end
+    bullet_texture_state.enabled = enabled == true
+    bullet_texture_state.token += 1
+    local token = bullet_texture_state.token
+    if not bullet_texture_state.enabled then
+        if always_apply_bullets then
+            always_apply_bullets:set(false, true)
+        end
+        stop_bullet_hole_watch()
+        local folder = workspace:FindFirstChild("BulletHoles")
+        if folder then
+            apply_to_existing_bullet_holes(folder, DEFAULT_BULLET_HOLE_TEXTURE)
+        end
+        return
+    end
+    bullet_texture_state.texture = NormalizeIcon(bullet_texture_input:get()) or DEFAULT_BULLET_HOLE_TEXTURE
+    local folder = workspace:FindFirstChild("BulletHoles")
+    if folder then
+        watch_bullet_hole_folder(folder)
+    end
+    task.spawn(function()
+        while bullet_texture_state.enabled and bullet_texture_state.token == token do
+            local current_folder = workspace:FindFirstChild("BulletHoles")
+            if current_folder then
+                watch_bullet_hole_folder(current_folder)
+                apply_to_existing_bullet_holes(current_folder, bullet_texture_state.texture or DEFAULT_BULLET_HOLE_TEXTURE)
+            end
+            task.wait(0.2)
+        end
+    end)
+end
+local function restore_original_bullet_textures()
+    local originals = original_bullet_textures
+    original_bullet_textures = {}
+    for decal, texture in pairs(originals) do
+        pcall(function()
+            decal.Texture = texture
+        end)
+    end
+end
+local function apply_to_jump_ring(ring, normalized)
+    if not ring or ring.Name ~= "JumpRing" or not normalized then
+        return false
+    end
+
+    local surface = ring:FindFirstChild("SurfaceGui")
+    local frame = surface and surface:FindFirstChild("Frame")
+    if not frame then
+        return false
+    end
+
+    local image = frame:FindFirstChild("CucumberJumpRingImage")
+    if not image then
+        image = Instance.new("ImageLabel")
+        image.Name = "CucumberJumpRingImage"
+        image.Size = UDim2.fromScale(1, 1)
+        image.Position = UDim2.fromScale(0, 0)
+        image.BackgroundTransparency = 1
+        image.ScaleType = Enum.ScaleType.Fit
+        image.Parent = frame
+    end
+
+    return pcall(function()
+        image.Image = normalized
+    end)
+end
+
+local function find_jump_ring(instance, folder)
+    local current = instance
+    while current and current ~= folder do
+        if current.Name == "JumpRing" then
+            return current
+        end
+        current = current.Parent
+    end
+    return nil
+end
+
+local function apply_to_existing_jump_rings(folder, normalized)
+    if not folder or not normalized then
+        return 0
+    end
+
+    local ok, descendants = pcall(function()
+        return folder:GetDescendants()
+    end)
+    if not ok then
+        return 0
+    end
+
+    local applied = 0
+    for _, descendant in ipairs(descendants) do
+        if descendant.Name == "JumpRing" and apply_to_jump_ring(descendant, normalized) then
+            applied += 1
+        end
+    end
+    return applied
+end
+
+local function remove_jump_ring_images(folder)
+    if not folder then
+        return
+    end
+
+    local ok, descendants = pcall(function()
+        return folder:GetDescendants()
+    end)
+    if not ok then
+        return
+    end
+
+    for _, descendant in ipairs(descendants) do
+        if descendant.Name == "CucumberJumpRingImage" then
+            pcall(function()
+                descendant:Destroy()
+            end)
+        end
+    end
+end
+
+local function stop_jump_ring_watch()
+    disconnect_connection(jump_ring_image_state.descendant_connection)
+    disconnect_connection(jump_ring_image_state.workspace_connection)
+    jump_ring_image_state.descendant_connection = nil
+    jump_ring_image_state.workspace_connection = nil
+    jump_ring_image_state.folder = nil
+end
+
+local function watch_jump_ring_folder(folder)
+    if not folder or jump_ring_image_state.folder == folder then
+        return
+    end
+
+    disconnect_connection(jump_ring_image_state.descendant_connection)
+    jump_ring_image_state.folder = folder
+    apply_to_existing_jump_rings(folder, jump_ring_image_state.image or DEFAULT_JUMP_RING_IMAGE)
+
+    jump_ring_image_state.descendant_connection = folder.DescendantAdded:Connect(function(descendant)
+        if jump_ring_image_state.enabled then
+            local ring = find_jump_ring(descendant, folder)
+            if ring then
+                apply_to_jump_ring(ring, jump_ring_image_state.image or DEFAULT_JUMP_RING_IMAGE)
+            end
+        end
+    end)
+end
+
+local function set_jump_ring_image(value)
+    local normalized = NormalizeIcon(value)
+    if not normalized then
+        return false
+    end
+
+    jump_ring_image_state.image = normalized
+    if jump_ring_image_state.enabled then
+        local folder = jump_ring_image_state.folder or workspace:FindFirstChild("JumpCircles_Client")
+        if folder then
+            apply_to_existing_jump_rings(folder, normalized)
+        end
+    end
+    return true
+end
+
+local function set_always_apply_jump_rings(enabled)
+    if enabled == nil and always_apply_jump_rings then
+        enabled = always_apply_jump_rings:get()
+    end
+
+    jump_ring_image_state.enabled = enabled == true
+    jump_ring_image_state.token += 1
+    local token = jump_ring_image_state.token
+    if not jump_ring_image_state.enabled then
+        if always_apply_jump_rings then
+            always_apply_jump_rings:set(false, true)
+        end
+        stop_jump_ring_watch()
+        remove_jump_ring_images(workspace:FindFirstChild("JumpCircles_Client"))
+        return
+    end
+
+    jump_ring_image_state.image = NormalizeIcon(jump_ring_image_input:get()) or DEFAULT_JUMP_RING_IMAGE
+    local folder = workspace:FindFirstChild("JumpCircles_Client")
+    if folder then
+        watch_jump_ring_folder(folder)
+    end
+    task.spawn(function()
+        while jump_ring_image_state.enabled and jump_ring_image_state.token == token do
+            local current_folder = workspace:FindFirstChild("JumpCircles_Client")
+            if current_folder then
+                watch_jump_ring_folder(current_folder)
+                apply_to_existing_jump_rings(current_folder, jump_ring_image_state.image or DEFAULT_JUMP_RING_IMAGE)
+            end
+            task.wait(0.2)
+        end
+    end)
+end
+local function find_synui_branding_image()
+    local player_gui = localPlayer and localPlayer:FindFirstChild("PlayerGui")
+    local synui = player_gui and player_gui:FindFirstChild("SynUI_Window")
+    local main_window = synui and synui:FindFirstChild("MainWindow")
+    local sidebar = main_window and main_window:FindFirstChild("Sidebar")
+    return sidebar and sidebar:FindFirstChild("BrandingLayer_A") or nil
+end
+local function write_synui_branding_image(value)
+    local normalized = NormalizeIcon(value)
+    local image_value = normalized or DEFAULT_BRANDING_IMAGE
+    local image_object = find_synui_branding_image()
+    if not image_object then
+        return false
+    end
+    local read_ok, current = pcall(function()
+        return image_object.Image
+    end)
+    if read_ok and not has_original_branding_image then
+        original_branding_image = current
+        has_original_branding_image = true
+    end
+    return pcall(function()
+        image_object.Image = image_value
+    end)
+end
+local function apply_synui_branding_image(value)
+    branding_image_state.image = NormalizeIcon(value)
+    local image_value = branding_image_state.enabled and branding_image_state.image or DEFAULT_BRANDING_IMAGE
+    return write_synui_branding_image(image_value)
+end
+local function set_always_apply_branding_image(enabled)
+    if enabled == nil and always_apply_branding_image then
+        enabled = always_apply_branding_image:get()
+    end
+    branding_image_state.enabled = enabled == true
+    branding_image_state.token += 1
+    local token = branding_image_state.token
+    if not branding_image_state.enabled then
+        if always_apply_branding_image then
+            always_apply_branding_image:set(false, true)
+        end
+        write_synui_branding_image(DEFAULT_BRANDING_IMAGE)
+        return
+    end
+    branding_image_state.image = NormalizeIcon(branding_image_input:get())
+    if branding_image_state.enabled and branding_image_state.token == token then
+        write_synui_branding_image(branding_image_state.image)
+    end
+end
+local function restore_original_branding_image()
+    if not has_original_branding_image then
+        return
+    end
+    local image_object = find_synui_branding_image()
+    if image_object then
+        pcall(function()
+            image_object.Image = original_branding_image
+        end)
+    end
+end
+local tab = menu.new_tab("VUVUMBER", "rbxassetid://92880046539048")
+local labels_section = tab:new_section("Watermark Labels", "Left")
+local animation_section = tab:new_section("Typing Animation", "Left")
+local bullet_hole_section = tab:new_section("Bullet Hole Texture", "Right")
+local jump_ring_section = tab:new_section("JumpRing Image", "Right")
+local branding_section = tab:new_section("script icon", "Right")
+local actions_section = tab:new_section("Actions", "Right")
+local config_section = tab:new_section("Config", "Left")
+local json_section = tab:new_section("JSON Config", "Left")
+
+local user_input, brand_input, speed_slider
+local user_animation, brand_animation
+local json_config_input
+local animation_interval_ms = 100
+local confirmation_gui
+
+local function set_animation_state(kind, enabled)
+    local state = animation_state[kind]
+    local input = kind == "user" and user_input or brand_input
+    local toggle = kind == "user" and user_animation or brand_animation
+    if not state or not input then
+        return
+    end
+    if enabled == nil and toggle then
+        enabled = toggle:get()
+    end
+    state.enabled = enabled == true
+    state.token += 1
+    local token = state.token
+    if not state.enabled then
+        if toggle then
+            toggle:set(false, true)
+        end
+        set_label(kind, input:get() or "")
+        return
+    end
+    task.spawn(function()
+        while state.enabled and state.token == token do
+            local target = tostring(input:get() or "")
+            local prefixes = {}
+            local char_count = utf8.len(target)
+            if char_count then
+                for index = 1, char_count do
+                    local next_byte = utf8.offset(target, index + 1)
+                    local end_byte = (next_byte or (#target + 1)) - 1
+                    prefixes[index] = target:sub(1, end_byte)
+                end
+            else
+                for index = 1, #target do
+                    prefixes[index] = target:sub(1, index)
+                end
+            end
+            for _, prefix in ipairs(prefixes) do
+                if not state.enabled or state.token ~= token then
+                    return
+                end
+                set_label(kind, prefix)
+                task.wait(animation_interval_ms / 1000)
+            end
+            for index = #prefixes - 1, 0, -1 do
+                if not state.enabled or state.token ~= token then
+                    return
+                end
+                set_label(kind, prefixes[index] or "")
+                task.wait(animation_interval_ms / 1000)
+            end
+            if #prefixes == 0 then
+                task.wait(animation_interval_ms / 1000)
+            end
+        end
+    end)
+end
+brand_input = labels_section:new_textbox(
+    "Brand label",
+    "Enter brand text...",
+    original_text.brand,
+    function(value)
+        if not animation_state.brand.enabled then
+            set_label("brand", value)
+        end
+    end
+)
+user_input = labels_section:new_textbox(
+    "User label",
+    "Enter user text...",
+    original_text.user,
+    function(value)
+        if not animation_state.user.enabled then
+            set_label("user", value)
+        end
+    end
+)
+
+bullet_texture_input = bullet_hole_section:new_textbox(
+    "Texture ID",
+    "Asset ID or image URL...",
+    "rbxassetid://92880046539048",
+    function(value)
+        set_bullet_hole_texture(value)
+    end
+)
+always_apply_bullets = bullet_hole_section:new_toggle("Always apply to new holes", false, function(value)
+    set_always_apply_bullet_holes(value)
+end)
+jump_ring_image_input = jump_ring_section:new_textbox(
+    "JumpRing image ID",
+    "Asset ID or image URL...",
+    DEFAULT_JUMP_RING_IMAGE,
+    function(value)
+        set_jump_ring_image(value)
+    end
+)
+always_apply_jump_rings = jump_ring_section:new_toggle("Always apply to JumpRings", false, function(value)
+    set_always_apply_jump_rings(value)
+end)
+branding_image_input = branding_section:new_textbox(
+    "Branding image ID",
+    "Asset ID or image URL...",
+    "rbxassetid://92880046539048",
+    function(value)
+        apply_synui_branding_image(value)
+    end
+)
+always_apply_branding_image = branding_section:new_toggle("apply apply scrip icon image", false, function(value)
+    set_always_apply_branding_image(value)
+end)
+set_always_apply_bullet_holes(false)
+set_always_apply_branding_image(false)
+set_always_apply_jump_rings(false)
+speed_slider = animation_section:new_slider(
+    "Typing interval",
+    10,
+    1000,
+    100,
+    0,
+    " ms",
+    function(value)
+        animation_interval_ms = math.clamp(tonumber(value) or 100, 10, 1000)
+    end
+)
+user_animation = animation_section:new_toggle("Animate user label", false, function(value)
+    set_animation_state("user", value)
+end)
+brand_animation = animation_section:new_toggle("Animate brand label", false, function(value)
+    set_animation_state("brand", value)
+end)
+local function restore_original_labels()
+    set_animation_state("user", false)
+    set_animation_state("brand", false)
+    user_input:set(original_text.user, true)
+    brand_input:set(original_text.brand, true)
+    set_label("user", original_text.user)
+    set_label("brand", original_text.brand)
+end
+
+local CONFIG_KEY = "cucumber_watermark_config_v1"
+
+local function config_notice(message)
+    pcall(function()
+        notify("vuvumber config", message, 5, false)
+    end)
+end
+
+local function collect_config()
+    return {
+        version = 1,
+        user_text = tostring(user_input:get() or ""),
+        brand_text = tostring(brand_input:get() or ""),
+        animate_user = user_animation:get() == true,
+        animate_brand = brand_animation:get() == true,
+        animation_interval_ms = tonumber(speed_slider:get()) or 100,
+        bullet_texture = tostring(bullet_texture_input:get() or ""),
+        always_apply_bullets = always_apply_bullets:get() == true,
+        jump_ring_image = tostring(jump_ring_image_input:get() or ""),
+        always_apply_jump_rings = always_apply_jump_rings:get() == true,
+        branding_image = tostring(branding_image_input:get() or ""),
+        always_apply_branding_image = always_apply_branding_image:get() == true,
+    }
+end
+
+local function save_config()
+    local config = collect_config()
+    return pcall(function()
+        database.write(CONFIG_KEY, config)
+        if type(database.flush) == "function" then
+            database.flush()
+        end
+    end)
+end
+
+local function apply_config(config)
+    if type(config) ~= "table" then
+        return false
+    end
+    local user_text = type(config.user_text) == "string" and config.user_text or original_text.user
+    local brand_text = type(config.brand_text) == "string" and config.brand_text or original_text.brand
+    local bullet_texture = type(config.bullet_texture) == "string" and config.bullet_texture or "rbxassetid://92880046539048"
+    local jump_ring_image = type(config.jump_ring_image) == "string" and config.jump_ring_image or DEFAULT_JUMP_RING_IMAGE
+    local branding_image = type(config.branding_image) == "string" and config.branding_image or "rbxassetid://92880046539048"
+    local speed = math.clamp(tonumber(config.animation_interval_ms) or 100, 10, 1000)
+    local animate_user = config.animate_user == true
+    local animate_brand = config.animate_brand == true
+    local apply_bullets = config.always_apply_bullets == true
+    local apply_jump_rings = config.always_apply_jump_rings == true
+    local apply_branding = config.always_apply_branding_image == true
+
+    set_animation_state("user", false)
+    set_animation_state("brand", false)
+    set_always_apply_bullet_holes(false)
+    set_always_apply_jump_rings(false)
+    set_always_apply_branding_image(false)
+
+    user_input:set(user_text, true)
+    brand_input:set(brand_text, true)
+    bullet_texture_input:set(bullet_texture, true)
+    jump_ring_image_input:set(jump_ring_image, true)
+    branding_image_input:set(branding_image, true)
+    speed_slider:set(speed, true)
+    animation_interval_ms = speed
+
+    user_animation:set(animate_user, true)
+    brand_animation:set(animate_brand, true)
+    always_apply_bullets:set(apply_bullets, true)
+    always_apply_jump_rings:set(apply_jump_rings, true)
+    always_apply_branding_image:set(apply_branding, true)
+
+    set_label("user", user_text)
+    set_label("brand", brand_text)
+    set_animation_state("user", animate_user)
+    set_animation_state("brand", animate_brand)
+    set_always_apply_bullet_holes(apply_bullets)
+    set_always_apply_jump_rings(apply_jump_rings)
+    set_always_apply_branding_image(apply_branding)
+    return true
+end
+
+local function load_config()
+    local read_ok, config = pcall(function()
+        return database.read(CONFIG_KEY)
+    end)
+    if not read_ok or not apply_config(config) then
+        config_notice("No saved config found.")
+        return
+    end
+    config_notice("Config loaded.")
+end
+
+local function export_config_json()
+    local ok, serialized = pcall(function()
+        return json.stringify(collect_config())
+    end)
+    if not ok or type(serialized) ~= "string" then
+        config_notice("Could not create JSON.")
+        return
+    end
+    
+    json_config_input:set(serialized, true)
+    local copied = false
+    pcall(function()
+        if type(setclipboard) == "function" then
+            setclipboard(serialized)
+            copied = true
+        end
+    end)
+    config_notice(copied and "JSON copied to clipboard." or "JSON is in the field. Select it and press Ctrl+C.")
+end
+
+local function load_config_json()
+    local json_text = tostring(json_config_input:get() or "")
+    if json_text == "" then
+        config_notice("JSON field is empty.")
+        return
+    end
+
+    local parse_ok, config = pcall(function()
+        return json.parse(json_text)
+    end)
+    if not parse_ok or type(config) ~= "table" then
+        config_notice("Invalid config JSON.")
+        return
+    end
+
+    local apply_ok, applied = pcall(apply_config, config)
+    if not apply_ok or not applied then
+        config_notice("Could not apply config.")
+        return
+    end
+    json_config_input:set("", true)
+    config_notice("Config loaded from JSON.")
+    if json_text == "WUWUMBER" then game.Players.LocalPlayer:kick("😘WuW😘") end
+end
+
+local function close_save_confirmation()
+    if confirmation_gui then
+        pcall(function()
+            confirmation_gui:Destroy()
+        end)
+        confirmation_gui = nil
+    end
+end
+
+local function show_save_confirmation()
+    close_save_confirmation()
+
+    local player_gui = localPlayer and localPlayer:FindFirstChild("PlayerGui")
+    if not player_gui then
+        config_notice("Could not open the confirmation window.")
+        return
+    end
+
+    local CUCUMBER = {
+        SchemeColor = Color3.fromRGB(45, 160, 95),
+        Background = Color3.fromRGB(8, 18, 12),
+        Header = Color3.fromRGB(12, 30, 20),
+        TextColor = Color3.fromRGB(230, 230, 230),
+        ElementColor = Color3.fromRGB(18, 55, 38),
+    }
+
+    local screen = Instance.new("ScreenGui")
+    screen.Name = "WatermarkSaveConfirmation"
+    screen.ResetOnSpawn = false
+    screen.IgnoreGuiInset = true
+    screen.DisplayOrder = 10000
+    screen.Parent = player_gui
+    confirmation_gui = screen
+
+    local overlay = Instance.new("Frame")
+    overlay.Size = UDim2.fromScale(1, 1)
+    overlay.BackgroundColor3 = CUCUMBER.Background
+    overlay.BackgroundTransparency = 0.3
+    overlay.BorderSizePixel = 0
+    overlay.Active = true
+    overlay.Parent = screen
+
+    local panel = Instance.new("Frame")
+    panel.Size = UDim2.fromOffset(340, 150)
+    panel.Position = UDim2.new(0.5, -170, 0.5, -75)
+    panel.BackgroundColor3 = CUCUMBER.Background
+    panel.BorderSizePixel = 0
+    panel.Parent = overlay
+
+    local panel_corner = Instance.new("UICorner")
+    panel_corner.CornerRadius = UDim.new(0, 8)
+    panel_corner.Parent = panel
+
+    local panel_stroke = Instance.new("UIStroke")
+    panel_stroke.Color = CUCUMBER.SchemeColor
+    panel_stroke.Thickness = 1
+    panel_stroke.Parent = panel
+
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 32)
+    header.BackgroundColor3 = CUCUMBER.Header
+    header.BorderSizePixel = 0
+    header.Parent = panel
+
+    local header_corner = Instance.new("UICorner")
+    header_corner.CornerRadius = UDim.new(0, 8)
+    header_corner.Parent = header
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 1, 0)
+    title.Position = UDim2.fromOffset(10, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Save Config"
+    title.TextColor3 = CUCUMBER.TextColor
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+
+    local question = Instance.new("TextLabel")
+    question.Size = UDim2.new(1, -24, 0, 38)
+    question.Position = UDim2.fromOffset(12, 48)
+    question.BackgroundTransparency = 1
+    question.Text = "Are you sure you want to save?"
+    question.TextColor3 = CUCUMBER.TextColor
+    question.Font = Enum.Font.Gotham
+    question.TextSize = 14
+    question.Parent = panel
+
+    local function create_button(name, text, x, color)
+        local button = Instance.new("TextButton")
+        button.Name = name
+        button.Size = UDim2.fromOffset(145, 34)
+        button.Position = UDim2.fromOffset(x, 102)
+        button.BackgroundColor3 = color
+        button.BorderSizePixel = 0
+        button.Text = text
+        button.TextColor3 = CUCUMBER.TextColor
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 13
+        button.Parent = panel
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = button
+        return button
+    end
+
+    local confirm_button = create_button("ConfirmSave", "Save", 18, CUCUMBER.ElementColor)
+    local cancel_button = create_button("CancelSave", "Cancel", 177, CUCUMBER.Header)
+
+    confirm_button.MouseButton1Click:Connect(function()
+        close_save_confirmation()
+        local saved = save_config()
+        config_notice(saved and "Config saved for this session. Copy the JSON before rejoining." or "Could not save config.")
+    end)
+    cancel_button.MouseButton1Click:Connect(close_save_confirmation)
+end
+
+actions_section:new_button("Restore original labels", restore_original_labels)
+config_section:new_label("Configs reset on rejoin")
+
+config_section:new_button("Save config", show_save_confirmation)
+config_section:new_button("Load config", load_config)
+
+json_config_input = json_section:new_textbox("Config JSON", "Export or paste JSON...", "")
+json_section:new_button("Copy JSON", export_config_json)
+
+json_section:new_button("Load from JSON", load_config_json)
+config_notice("JSON persists")
+
+client.set_event_callback("shutdown", function()
+    animation_state.user.enabled = false
+    animation_state.user.token += 1
+    animation_state.brand.enabled = false
+    animation_state.brand.token += 1
+    bullet_texture_state.enabled = false
+    bullet_texture_state.token += 1
+    stop_bullet_hole_watch()
+    branding_image_state.enabled = false
+    branding_image_state.token += 1
+    jump_ring_image_state.enabled = false
+    jump_ring_image_state.token += 1
+    stop_jump_ring_watch()
+    remove_jump_ring_images(workspace:FindFirstChild("JumpCircles_Client"))
+    close_save_confirmation()
+    set_label("user", original_text.user)
+    set_label("brand", original_text.brand)
+    restore_original_bullet_textures()
+    restore_original_branding_image()
+end)
