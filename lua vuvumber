@@ -4,6 +4,10 @@
 {"animate_brand":true,"jump_ring_image":"rbxassetid://92880046539048","bullet_texture":"rbxassetid://92880046539048","always_apply_jump_rings":true,"branding_image":"rbxassetid://92880046539048","always_apply_bullets":true,"version":1,"always_apply_branding_image":true,"animate_user":true,"user_text":"cucumber","brand_text":"cucumber","animation_interval_ms":100}
 
 ]]
+local cfg
+if (...) then
+    cfg = (...)
+end
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 
@@ -933,7 +937,9 @@ json_section:new_button("Copy JSON", export_config_json)
 
 json_section:new_button("Load from JSON", load_config_json)
 config_notice("JSON persists")
-
+if cfg then
+    json.parse(tostring(cfg))
+end
 client.set_event_callback("shutdown", function()
     animation_state.user.enabled = false
     animation_state.user.token += 1
