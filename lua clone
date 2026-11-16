@@ -10,7 +10,6 @@ local tab = menu.new_tab("Player Clone", "rbxassetid://92880046539048")
 local size_section = tab:new_section("Clone Size and Position", "Left")
 local controls_section = tab:new_section("Clone Controls", "Left")
 local motion_section = tab:new_section("Follow Motion", "Right")
-local config_section = tab:new_section("JSON Config", "Right")
 
 local clone_scale_slider = size_section:new_slider("Clone scale", 0.1, 1, 0.5, 2, "x")
 local follow_side_slider = size_section:new_slider("Side offset", -10, 10, 0, 2, " studs")
@@ -22,7 +21,6 @@ local spring_damping_slider = motion_section:new_slider("Spring damping", 0, 20,
 local rotation_smoothness_slider = motion_section:new_slider("Rotation smoothness", 0, 20, 6, 1)
 local max_follow_speed_slider = motion_section:new_slider("Maximum follow speed", 1, 100, 32, 0, " studs/s")
 local snap_distance_slider = motion_section:new_slider("Snap distance", 5, 200, 60, 0, " studs")
-local json_config_input
 
 local cloneModel = nil
 local sourceCharacter = nil
@@ -622,86 +620,6 @@ local function updateClone(deltaTime)
     end
 end
 
-local function configNotice(message)
-    pcall(function()
-        notify("Player Clone Config", message, 2, false)
-    end)
-end
-
-local function collectCloneConfig()
-    return {
-        version = 1,
-        clone_scale = clone_scale_slider:get(),
-        follow_side = follow_side_slider:get(),
-        follow_height = follow_height_slider:get(),
-        follow_depth = follow_depth_slider:get(),
-        spring_stiffness = spring_stiffness_slider:get(),
-        spring_damping = spring_damping_slider:get(),
-        rotation_smoothness = rotation_smoothness_slider:get(),
-        max_follow_speed = max_follow_speed_slider:get(),
-        snap_distance = snap_distance_slider:get(),
-    }
-end
-
-local function loadCloneConfig(config)
-    if type(config) ~= "table" then
-        return false
-    end
-
-    clone_scale_slider:set(math.clamp(tonumber(config.clone_scale) or 0.5, 0.1, 1), true)
-    follow_side_slider:set(math.clamp(tonumber(config.follow_side) or 0, -10, 10), true)
-    follow_height_slider:set(math.clamp(tonumber(config.follow_height) or -1.3, -10, 10), true)
-    follow_depth_slider:set(math.clamp(tonumber(config.follow_depth) or -3, -20, 0), true)
-    spring_stiffness_slider:set(math.clamp(tonumber(config.spring_stiffness) or 50, 1, 100), true)
-    spring_damping_slider:set(math.clamp(tonumber(config.spring_damping) or 5, 0, 20), true)
-    rotation_smoothness_slider:set(math.clamp(tonumber(config.rotation_smoothness) or 6, 0, 20), true)
-    max_follow_speed_slider:set(math.clamp(tonumber(config.max_follow_speed) or 32, 1, 100), true)
-    snap_distance_slider:set(math.clamp(tonumber(config.snap_distance) or 60, 5, 200), true)
-    return true
-end
-
-local function copyCloneConfigJson()
-    local ok, encoded = pcall(function()
-        return json.stringify(collectCloneConfig())
-    end)
-    if not ok or type(encoded) ~= "string" then
-        configNotice("Could not create config JSON.")
-        return
-    end
-
-    json_config_input:set(encoded, true)
-    local copied = false
-    pcall(function()
-        if type(setclipboard) == "function" then
-            setclipboard(encoded)
-            copied = true
-        end
-    end)
-    configNotice(copied and "Config JSON copied." or "JSON is in the field. Select it and press Ctrl+C.")
-end
-
-local function loadCloneConfigJson()
-    local jsonText = tostring(json_config_input:get() or "")
-    if jsonText == "" then
-        configNotice("JSON field is empty.")
-        return
-    end
-
-    local parseOk, config = pcall(function()
-        return json.parse(jsonText)
-    end)
-    if not parseOk or type(config) ~= "table" then
-        configNotice("Invalid config JSON.")
-        return
-    end
-
-    if not loadCloneConfig(config) then
-        configNotice("Could not apply config.")
-        return
-    end
-    configNotice("Config loaded.")
-end
-
 local reloadConfirmationGui
 
 local function closeReloadConfirmation()
@@ -827,11 +745,6 @@ local function showReloadConfirmation()
     end)
     cancelButton.MouseButton1Click:Connect(closeReloadConfirmation)
 end
-
-json_config_input = config_section:new_textbox("Config JSON", "Export or paste JSON...", "")
-config_section:new_button("Copy JSON", copyCloneConfigJson)
-config_section:new_button("Load from JSON", loadCloneConfigJson)
-config_section:new_label("Copy the JSON to keep these slider values.")
 
 controls_section:new_button("Reload clone", showReloadConfirmation)
 
