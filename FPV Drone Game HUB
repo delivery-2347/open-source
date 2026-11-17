@@ -1,0 +1,137 @@
+-- pelmen
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local Humanoid = character:WaitForChild("Humanoid")
+local HRP = character:WaitForChild("HumanoidRootPart")
+-- togle 
+local ENEIBLE = true
+local toggleall = {}
+
+localPlayer.CharacterAdded:Connect(function(char)
+    character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+	Humanoid = character:WaitForChild("Humanoid")
+    HRP = character:WaitForChild("HumanoidRootPart")
+end)
+
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/delivery-2347/w/refs/heads/main/Kavo%20Ultimate/Kavo%20Ultimate"))()
+
+local CUCUMBER = {
+    SchemeColor = Color3.fromRGB(45, 150, 85),
+    Background = Color3.fromRGB(5, 10, 7),
+    Header = Color3.fromRGB(9, 20, 14),
+    TextColor = Color3.fromRGB(225, 230, 227),
+    ElementColor = Color3.fromRGB(16, 36, 25)
+}
+
+local Window = Kavo.CreateLib("FPV Drone Game HUB", CUCUMBER)
+
+local Tab = Window:NewTab("mein")
+
+local Section = Tab:NewSection("by CUCUMBER")
+
+do
+    function get_drun()
+        local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+        local droneGui = playerGui:FindFirstChild("DroneGui")
+        local drun = droneGui.FPVHotbar.FPVSlot.ItemName.Text
+        local skok = string.match(drun, "(%d+)/%d+")
+        return tonumber(skok) or 0
+    end
+
+    toggleall.auto_get_fpv = Section:NewToggle("auto get fpv", "Включает или выключает режим", function(state)
+        while state do 
+            task.wait(0)
+            for _, obj in ipairs(workspace["\209\133\209\131\208\185\208\189\209\143 \208\186\208\176\208\186\208\176\209\143-\209\130\208\190"]:GetDescendants()) do
+                if get_drun() == 2 then task.wait(0.1) continue  end
+                if obj.Name == "DroneBox" and obj:FindFirstChildOfClass("ClickDetector") then
+                    fireclickdetector(obj.ClickDetector)
+                end
+            end
+        end
+    end)
+
+    Section:NewKeybind("auto get fpv", "Нажми, чтобы назначить кнопку", Enum.KeyCode.G, function()
+        for _, obj in ipairs(workspace["\209\133\209\131\208\185\208\189\209\143 \208\186\208\176\208\186\208\176\209\143-\209\130\208\190"]:GetDescendants()) do
+            if get_drun() == 2 then return end
+            if obj.Name == "DroneBox" and obj:FindFirstChildOfClass("ClickDetector") then
+                fireclickdetector(obj.ClickDetector)
+            end
+        end
+    end)
+end
+
+Section:NewKeybind("spawn fpv", "Нажми, чтобы назначить кнопку", Enum.KeyCode.H, function()
+    game:GetService("ReplicatedStorage").SpawnDroneEvent:FireServer()
+end)
+
+local Tab = Window:NewTab("fpv control")
+
+local Section = Tab:NewSection("by CUCUMBER")
+do
+    local speed
+    Section:NewKeybind("acceleration ", "67", Enum.KeyCode.X, function()
+        local objflod = localPlayer.Name .. "_FPVDrone"
+        local obj = workspace:FindFirstChild(objflod).CameraPoint
+        obj.AssemblyLinearVelocity = obj.CFrame.LookVector * speed
+    end)
+    local SpeedSlider = Section:NewSlider("Скорость", "Значение от 0 до 100", 500, 0, function(value)
+        speed = value
+    end)
+    SpeedSlider:SetValue(500)
+end
+
+do
+    local neim_hub = "FPV Drone Game HUB"
+    ril_nem = nil
+    repeat
+        for _, obj in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+            if obj:IsA("TextLabel") and obj.Text:find(neim_hub, 1, true) then
+                local parent = obj.Parent
+
+                while parent and parent ~= game:GetService("CoreGui") do
+                    if parent:IsA("ScreenGui") then
+                        ril_nem = parent
+                        print("GUI найден:", ril_nem:GetFullName())
+                        break
+                    end
+
+                    parent = parent.Parent
+                end
+
+                if ril_nem then
+                    break
+                end
+            end
+        end
+        if not ril_nem then
+            task.wait(0.05)
+        end
+    until ril_nem
+    local watchedGui = ril_nem
+    local destroyed = false
+    local function OnGuiDestroyed()
+        if destroyed then return end
+        destroyed = true
+        if ril_nem == watchedGui then
+            ril_nem = nil
+        end
+        ENEIBLE = false
+        for _, toggle in pairs(toggleall) do
+            pcall(function()
+                toggle:UpdateToggle(
+                    "If you see this message, your GUI is frozen. Reboot it.",
+                    false
+                )
+            end)
+        end
+        print("da blina 😭😭😭😭😭😭")
+    end
+    watchedGui.Destroying:Connect(OnGuiDestroyed)
+    watchedGui.AncestryChanged:Connect(function(_, parent)
+        if parent == nil then
+            OnGuiDestroyed()
+        end
+    end)
+end
